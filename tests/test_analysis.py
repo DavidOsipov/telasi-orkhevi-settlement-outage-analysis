@@ -26,8 +26,8 @@ class AnalysisTests(unittest.TestCase):
 
     def test_current_report_uses_site_specific_notification_gaps(self):
         text = analysis.render()
-        self.assertIn("SITE_A: mean=31.70 d; median=23.0 d", text)
-        self.assertIn("SITE_B: mean=24.30 d; median=22.5 d", text)
+        self.assertIn("SITE_A: mean=317/10 = 31.7 d; median=23 d", text)
+        self.assertIn("SITE_B: mean=243/10 = 24.3 d; median=45/2 = 22.5 d", text)
         self.assertNotIn("mean=30.19 d", text)
         self.assertIn("Do not restate these values as 'an outage every N days'", text)
 
@@ -41,7 +41,8 @@ class AnalysisTests(unittest.TestCase):
         self.assertIn("SITE_A unique ETA dates: 10", text)
         self.assertIn("SITE_B unique ETA dates: 11", text)
         self.assertIn("shared ETA dates: 10", text)
-        self.assertIn("Jaccard(unique ETA-date sets): 0.909", text)
+        self.assertIn("Jaccard(unique ETA-date sets): 10/11", text)
+        self.assertIn("decimal rounded to 3 dp: 0.909", text)
         self.assertNotIn("SITE_A groups: 10", text)
 
     def test_russian_summary_headlines_match_current_analysis(self):
