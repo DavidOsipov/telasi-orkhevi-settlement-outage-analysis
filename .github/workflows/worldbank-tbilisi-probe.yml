@@ -13,93 +13,34 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Fetch official WBES Tbilisi infrastructure indicators
+      - name: Extract exact WBES subgroup-indicator API calls from SPA bundle
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, pathlib, requests, re
-
-          BASE='https://extdataportal.worldbank.org/api/esapi'
-          urls={
-            'subtopics': f'{BASE}/GetSubTopics/8?lang=en',
-            'topic8': f'{BASE}/GetEconomyIndicatorData/economyid/74/topicid/8/year/2023?lang=en',
-            'location_cuts': f'{BASE}/GetEconomyCutsData/economyid/74/year/2023/cutsid/3/?lang=en',
-            'cuts': f'{BASE}/GetAllCuts?lang=en',
-          }
-          s=requests.Session(); s.headers['User-Agent']='Mozilla/5.0'
-          docs={}
-          for key,u in urls.items():
-              r=s.get(u,timeout=60); r.raise_for_status(); docs[key]=r.json()
-              print(f'FETCH {key} status={r.status_code} bytes={len(r.content)} url={u}')
-
-          print('\n=== SUBTOPICS TOPIC 8 ===')
-          print(json.dumps(docs['subtopics'],ensure_ascii=False,indent=2)[:50000])
-
-          print('\n=== TOPIC 8 INDICATOR METADATA / GEORGIA VALUES ===')
-          print('type',type(docs['topic8']).__name__,'len',len(docs['topic8']) if isinstance(docs['topic8'],list) else None)
-          # Print entries containing electricity/outage/power plus representative entries for schema.
-          topic=docs['topic8'] if isinstance(docs['topic8'],list) else [docs['topic8']]
-          print('FIRST_TOPIC',json.dumps(topic[:3],ensure_ascii=False,indent=2)[:30000])
-          elect=[]
-          for x in topic:
-              txt=json.dumps(x,ensure_ascii=False).lower()
-              if any(k in txt for k in ('electric','outage','power')): elect.append(x)
-          print('ELECTRIC_TOPIC_ENTRIES',json.dumps(elect,ensure_ascii=False,indent=2)[:100000])
-
-          print('\n=== LOCATION CUTS SCHEMA ===')
-          cuts=docs['location_cuts'] if isinstance(docs['location_cuts'],list) else [docs['location_cuts']]
-          print('rows',len(cuts))
-          print('FIRST_CUTS',json.dumps(cuts[:2],ensure_ascii=False,indent=2)[:50000])
-          tb=[]
-          for x in cuts:
-              txt=json.dumps(x,ensure_ascii=False).lower()
-              if ('tbilisi' in txt or '"1061"' in txt or ': 1061' in txt): tb.append(x)
-          print('TBILISI_ROWS',len(tb))
-          print(json.dumps(tb,ensure_ascii=False,indent=2)[:250000])
-
-          # Build a compact machine-readable extraction. Topic metadata often maps
-          # queryFieldName -> indicator label; cuts row then contains those fields.
-          indicator_map={}
-          for x in topic:
-              if not isinstance(x,dict): continue
-              label=x.get('indicator') or x.get('name') or x.get('publishedName')
-              q=x.get('queryFieldName') or x.get('indicatorCode') or x.get('code')
-              if q and label: indicator_map[str(q)]=str(label)
-
-          relevant_fields={}
-          for q,label in indicator_map.items():
-              low=label.lower()
-              if any(k in low for k in ('electric','outage','power')):
-                  relevant_fields[q]=label
-          print('RELEVANT_FIELD_MAP',json.dumps(relevant_fields,ensure_ascii=False,indent=2))
-
-          extracted=[]
-          for row in tb:
-              if not isinstance(row,dict): continue
-              vals={}
-              for k,v in row.items():
-                  # Direct mapped key, or key embeds |shortcode / subgroup suffix.
-                  base=k.split(' - ')[0]
-                  short=base.split('|')[-1]
-                  label=relevant_fields.get(k) or relevant_fields.get(base) or relevant_fields.get(short)
-                  if label is not None:
-                      vals[k]={'label':label,'value':v}
-              # Fallback: include any key whose name itself hints at electricity.
-              for k,v in row.items():
-                  if any(h in k.lower() for h in ('electric','outage','power')) and k not in vals:
-                      vals[k]={'label':k,'value':v}
-              extracted.append({
-                  'name':row.get('name'),'location':row.get('location'),'locationId':row.get('locationId'),
-                  'year':row.get('year'),'economy':row.get('economy'),'values':vals,
-              })
-          compact={'urls':urls,'electric_indicator_map':relevant_fields,'tbilisi':extracted}
-          pathlib.Path('worldbank-tbilisi-electricity.json').write_text(json.dumps(compact,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print('\n=== COMPACT ===')
-          print(json.dumps(compact,ensure_ascii=False,indent=2)[:100000])
+          import re, requests, pathlib
+          u='https://www.enterprisesurveys.org/etc.clientlibs/datasites-spa/clientlibs/clientlib-enterprisesurveys-data.js'
+          t=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=60).text
+          terms=['GetEconomyCutsData','GetEconomyIndicatorData','cutsId','cutId','subGroup','subgroup','GetCut','IndicatorData']
+          out=[]
+          for term in terms:
+            out.append('\n### '+term)
+            for i,m in enumerate(re.finditer(term,t,re.I)):
+              if i>=100: break
+              a=max(0,m.start()-1200); b=min(len(t),m.end()+1800)
+              out.append(t[a:b].replace('\n',' '))
+          # Extract every quoted path containing GetEconomy / Cut / Indicator.
+          out.append('\n### QUOTED PATHS')
+          pats=[r'["\']([^"\']*(?:GetEconomy|CutsData|IndicatorData|Cut)[^"\']*)["\']']
+          vals=set()
+          for p in pats:
+            vals.update(re.findall(p,t,re.I))
+          out.extend(sorted(vals))
+          pathlib.Path('wb-js-context.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
+          print('\n'.join(out[-700:]))
           PY
       - uses: actions/upload-artifact@v7
         with:
           name: worldbank-tbilisi-probe
-          path: worldbank-tbilisi-electricity.json
+          path: wb-js-context.txt
           if-no-files-found: error
