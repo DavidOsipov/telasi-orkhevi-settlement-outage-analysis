@@ -1,0 +1,139 @@
+name: Temporary Tbilisi district comparison research
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Query Telasi API for selected Tbilisi areas
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, time
+          from collections import Counter
+          from datetime import datetime
+          from pathlib import Path
+
+          ENDPOINT='https://app.telasi.ge/api/view/telasi/getPoweroutages'
+          TERMS={
+            'Orkhevi':'ორხევი',
+            'Varketili':'ვარკეთილი',
+            'Vazisubani':'ვაზისუბანი',
+            'Temka':'თემქა',
+            'Gldani':'გლდანი',
+            'Didi Dighomi':'დიდი დიღომი',
+            'Lilo':'ლილო',
+            'Ponichala':'ფონიჭალა',
+            'Isani':'ისანი',
+          }
+          HEADERS={
+            'Content-Type':'application/json; charset=utf-8',
+            'lang':'ka',
+            'Origin':'https://www.telasi.ge',
+            'Referer':'https://www.telasi.ge/',
+            'User-Agent':'Mozilla/5.0',
+          }
+
+          def post(payload):
+            raw=json.dumps(payload, ensure_ascii=False).encode('utf-8')
+            req=urllib.request.Request(ENDPOINT,data=raw,headers=HEADERS,method='POST')
+            with urllib.request.urlopen(req,timeout=30) as r:
+              data=r.read()
+            doc=json.loads(data.decode('utf-8'))
+            c=doc.get('content') or {}
+            return c
+
+          def tax_ids(item):
+            t=item.get('taxonomy') or []
+            out=[]
+            if isinstance(t,list):
+              for x in t:
+                if isinstance(x,int): out.append(x)
+                elif isinstance(x,dict):
+                  for k in ('id','term_id','taxonomy_id'):
+                    if isinstance(x.get(k),int): out.append(x[k]); break
+            return out
+
+          results={}
+          for label,term in TERMS.items():
+            unique={}
+            page=1
+            reported=None
+            totals=[]
+            while True:
+              payload={
+                'contentType':'poweroutage',
+                'searchText':term,
+                'pageNumber':page,
+                'perPage':100,
+                'selectedlan':'ka',
+                'taxonomy':{'content_poweroutage':[2769,2770]},
+              }
+              c=post(payload)
+              items=[x for x in (c.get('list') or []) if isinstance(x,dict)]
+              total=c.get('listCount')
+              if isinstance(total,int): totals.append(total)
+              if reported is None and isinstance(total,int): reported=total
+              before=len(unique)
+              for x in items:
+                key=str(x.get('id')) if x.get('id') is not None else json.dumps(x,ensure_ascii=False,sort_keys=True)
+                unique.setdefault(key,x)
+              if reported is not None and len(unique)>=reported: break
+              if not items or len(unique)==before: break
+              page+=1
+              if page>50: break
+              time.sleep(0.15)
+
+            rows=list(unique.values())
+            years=Counter()
+            unplanned_years=Counter()
+            dates=[]
+            planned=unplanned=other=0
+            for x in rows:
+              ids=set(tax_ids(x))
+              if 2770 in ids: cls='unplanned'; unplanned+=1
+              elif 2769 in ids: cls='planned'; planned+=1
+              else: cls='other'; other+=1
+              rawdate=x.get('date') or x.get('created_at') or ''
+              year=None
+              if isinstance(rawdate,str) and len(rawdate)>=4 and rawdate[:4].isdigit():
+                year=int(rawdate[:4]); years[year]+=1
+                if cls=='unplanned': unplanned_years[year]+=1
+                dates.append(rawdate[:10])
+            results[label]={
+              'query':term,
+              'reported_total':reported,
+              'returned_unique':len(rows),
+              'complete_against_reported_total': reported is not None and len(rows)==reported and len(set(totals))<=1,
+              'pages_fetched':page,
+              'planned':planned,
+              'unplanned':unplanned,
+              'other':other,
+              'first_publication_date':min(dates) if dates else None,
+              'last_publication_date':max(dates) if dates else None,
+              'publications_by_year':dict(sorted(years.items())),
+              'unplanned_by_year':dict(sorted(unplanned_years.items())),
+            }
+            print(label, json.dumps(results[label],ensure_ascii=False,sort_keys=True))
+
+          out={'captured_at':datetime.now().astimezone().isoformat(timespec='seconds'),'results':results}
+          Path('district-comparison.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('\n=== COMPACT TABLE ===')
+          for label,r in results.items():
+            y2025=r['unplanned_by_year'].get(2025,0)
+            y2026=r['unplanned_by_year'].get(2026,0)
+            print(f"{label:14} total={r['reported_total']!s:>4} returned={r['returned_unique']:>4} complete={str(r['complete_against_reported_total']):5} unplanned={r['unplanned']:>4} 2025={y2025:>3} 2026={y2026:>3} span={r['first_publication_date']}..{r['last_publication_date']}")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tbilisi-district-comparison
+          path: district-comparison.json
+          if-no-files-found: error
