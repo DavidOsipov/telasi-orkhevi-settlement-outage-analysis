@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "source": "World Bank Enterprise Surveys",
+  "economy": "Georgia",
+  "survey_year": 2023,
+  "topic_id": 8,
+  "cut_id": 3,
+  "cut": "Location",
+  "subcut": "Tbilisi",
+  "source_endpoint": "https://extdataportal.worldbank.org/api/esapi/GetEconomyCutsData/economyid/74/year/2023/topicid/8/cutsid/3/?lang=en",
+  "captured_on": "2026-08-08",
+  "raw_response_bytes": 19052,
+  "raw_response_sha256": "e1fdd8d139a786b05808a0a9861727e5bf48121f87f2cabafe157bdf6c74accd",
+  "capture_provenance": {
+    "github_actions_run_id": 31263982386,
+    "github_actions_job_id": 93119041374,
+    "github_actions_artifact_id": 9023584948,
+    "artifact_sha256": "cfb3a3cf5a9bcacd3508de9031a063a9dd598b26f7b7b6c9df0f01ebe04e8b2a"
+  },
+  "precision_note": "WBES API values below are published/display values with finite decimal precision. Their rational interpretation is exact only for the returned decimal strings and does not recover hidden unrounded weighted survey estimates.",
+  "indicators": {
+    "in16": {
+      "indicator_id": 183,
+      "indicator": "Percent of firms experiencing electrical outages",
+      "published_value": "31.8",
+      "unit": "percent"
+    },
+    "bready_in2": {
+      "indicator_id": 231,
+      "indicator": "[B-READY] Average number of electrical outages in a typical month",
+      "published_value": "0.8",
+      "unit": "outages per typical month"
+    },
+    "bready_in3_median": {
+      "indicator_id": 232,
+      "indicator": "[B-READY] Duration, in hours, of a typical electrical outage [median]",
+      "published_value": "0",
+      "unit": "hours"
+    },
+    "in12": {
+      "indicator_id": 101,
+      "indicator": "Percent of firms identifying electricity as a major or very severe constraint",
+      "published_value": "38.6",
+      "unit": "percent"
+    },
+    "bready_in9": {
+      "indicator_id": 246,
+      "indicator": "[B-READY] Percent of firms owning or sharing a generator",
+      "published_value": "29.8",
+      "unit": "percent"
+    }
+  }
+}
