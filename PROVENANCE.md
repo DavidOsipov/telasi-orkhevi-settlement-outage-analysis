@@ -4,12 +4,19 @@
 
 The public SMS source files are **redacted text transcripts**, not forensic exports of a phone/SMS database.
 
+`SITE_A` and `SITE_B` are stable legacy source IDs, not geographic site IDs:
+
+- `SITE_A` = neighbor resident SMS archive for the same Orkhevi building; supplied history begins in 2024.
+- `SITE_B` = repository-owner resident SMS archive for that same building; supplied history begins in 2025.
+
+The user clarified this same-building relationship on 2026-08-08. The neighbor may receive Telasi messages for other properties generally, but the pseudonymized SITE_A transcript used in this repository is treated as the same Orkhevi building as SITE_B.
+
 Limitations:
 
 - original SMS receipt timestamps are not preserved;
 - device/SIM metadata are not preserved;
 - subscriber numbers are replaced with stable pseudonyms;
-- exact addresses are not published;
+- exact building/apartment addresses are not published;
 - transcript order is not treated as a verified timestamp sequence.
 
 They are therefore stored under `data/source_transcripts/`, not described as raw phone evidence.
@@ -18,68 +25,30 @@ They are therefore stored under `data/source_transcripts/`, not described as raw
 
 `scripts/build_notifications.py` converts source transcript blocks into `data/derived/notifications.csv` using deterministic IDs, source line ranges and SHA-256 hashes of each redacted message block.
 
-`data/derived/notification_groups.csv` is manually reviewed. Every group points to one or more source-message IDs. New group IDs include date/category/sequence (`GYYYYMMDD-XNN`); the previous date-only ID remains in `legacy_group_id`.
+`data/derived/notification_groups.csv` is manually reviewed. Every group points to one or more source-message IDs. The legacy column name `evidence_sites` stores these resident source IDs; it should not be interpreted as evidence for different geographic sites.
 
-`validate.py` rebuilds `notifications.csv` and checks that group evidence sites, dates, ETA sets and planned-window arithmetic agree with supporting message rows.
+New group IDs include date/category/sequence (`GYYYYMMDD-XNN`); the previous date-only ID remains in `legacy_group_id`.
+
+`validate.py` rebuilds `notifications.csv` and checks source/group dates, ETA sets and planned-window arithmetic.
+
+## Source-coverage consequence
+
+SITE_A begins in 2024 and SITE_B begins in 2025. Therefore the building-level union changes ascertainment over time: the earlier period has one resident archive and the later period has two. The longest single-source SITE_A series is preferred for longitudinal rate normalization; the union is secondary/contextual.
 
 ## Telasi public API source layer
 
 `data/telasi_api/` is a separate official-source publication layer obtained from Telasi's public website APIs.
 
-### Canonical Orkhevi search snapshot
-
-The 2026-08-08 Orkhevi search response was captured in Postman after manually re-entering the Georgian UTF-8 query because a copied cURL/import path had mangled `searchText`.
-
-The original JSON is 295,834 bytes with SHA-256:
+The canonical 2026-08-08 Orkhevi search response is preserved and reconstructs to 295,834 bytes with SHA-256:
 
 `99e9f1a1331b97300bc1984304c2d71db8acd46fbf543a8ff0e45d3eecf0cb89`
 
-Because the repository write channel used for that snapshot was text-only, the source bytes are stored reversibly as deterministic gzip → Base64 split into eight verified text chunks. `MANIFEST.json` records original/gzip/Base64/chunk hashes, and both `validate.py` and `scripts/reconstruct_telasi_api_snapshot.py` reconstruct the original source bytes.
+Exploratory API probes are referenced by GitHub Actions provenance and response hashes in `data/telasi_api/raw/2026-08-08/MANIFEST.json`; bulky duplicate probe payloads and browser netlogs are intentionally not committed.
 
-### Focused exploratory API probes
+## Independent benchmark source
 
-GitHub Actions run `31253449527` / artifact `9020698787` tested four `getPoweroutages` request shapes plus `getMtData`. The raw exploratory responses were inspected from GitHub Actions artifact `9020698787`; they are not duplicated in-repo. Their byte lengths, SHA-256 values and parsed counts are retained in `raw/2026-08-08/MANIFEST.json`.
-
-The exploratory workflow's console summary mistakenly inspected `api.listCount` / `api.list`, so it printed zeros. The inspected artifact responses show that the actual records were under `content.listCount` / `content.list`:
-
-- user exact page payload: reported total 889, page 1 contains 12 records;
-- taxonomy search for `ორხევ`: 17/17 records;
-- contentType + taxonomy search: 17/17 records;
-- general contentType list: reported total 889, page 1 contains 100 records.
-
-The incorrect exploratory summary is not treated as evidence; the corrected observations were derived from the artifact raw responses and retained with response hashes in the manifest.
-
-The `getMtData` response is also preserved and contains page/Nuxt metadata rather than the outage publication body.
-
-### What is intentionally not committed
-
-A browser network trace/netlog was used during reverse-engineering but is not published because such traces can contain unrelated request metadata and are not needed to reproduce the relevant API calls. Endpoint, payload and header semantics needed for reproduction are documented in `data/telasi_api/README.md`.
-
-## API-derived outputs
-
-`scripts/fetch_telasi_api.py` can:
-
-- normalize a captured response;
-- perform a live text search;
-- fetch a single list page; or
-- reconstruct the currently API-reported list twice, preserving raw pages for both passes and requiring count/content stability before marking the corpus complete.
-
-Runtime live data are written under ignored `artifacts/` and are not automatically promoted to curated repository evidence.
-
-`scripts/compare_telasi_api_sms.py` performs exact restoration-ETA corroboration. Corpus-wide negative conclusions require two agreeing count-complete pagination passes and an independent consistency check between `fetch_metadata.json` and the loaded `records.csv` count/IDs. This is a stability gate for the public publication layer, not an atomic internal Telasi incident snapshot.
-
-## External context
-
-`data/external_context.csv` contains separately sourced system-level context. These rows are not local notification groups and are not automatically assigned as causes of local events.
+`data/benchmarks/wbes_tbilisi_2023.json` preserves the World Bank Enterprise Surveys Tbilisi 2023 subgroup values and capture provenance. Published decimals are treated as finite-precision source display values. Exact rational forms in the analysis represent those displayed strings exactly; they do not recover hidden unrounded weighted estimates.
 
 ## Stronger future evidence
 
-For a formal reliability dispute, stronger resident evidence would include:
-
-- SMS receipt timestamp;
-- sender identity/short code;
-- full original message body;
-- device timezone;
-- immutable original export hash.
-
-Independent power-loss/restoration logging or authoritative Telasi incident records would allow physical incidents and durations to be reconstructed.
+For a formal reliability dispute, stronger evidence would include SMS receipt timestamps, sender identity, immutable original exports, and ideally independent power-loss/restoration logging or authoritative Telasi incident records.
