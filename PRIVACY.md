@@ -14,4 +14,6 @@ The primary complaint to Telasi can identify the complainant's own subscriber nu
 
 The neighbor's multiple-property warning is a methodological/privacy constraint: do not publicly assert SITE_A's exact location unless the subscriber-to-property mapping has been privately confirmed.
 
-Live API/runtime output belongs under ignored `artifacts/`. Only deliberately reviewed source snapshots with manifest provenance should be promoted under `data/telasi_api/raw/`.
+Live API/runtime output belongs under ignored `artifacts/`, including Telasi API responses and refreshed WBES benchmark captures. Only deliberately reviewed source/benchmark snapshots with documented provenance should be promoted under `data/`.
+
+The current WBES benchmark contains public aggregate/subgroup statistics rather than respondent-level microdata. Do not add respondent-level Enterprise Survey records to this repository unless their terms and disclosure risk have been separately reviewed.
