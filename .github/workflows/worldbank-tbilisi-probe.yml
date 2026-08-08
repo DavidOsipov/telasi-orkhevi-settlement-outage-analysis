@@ -13,34 +13,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Extract exact WBES subgroup-indicator API calls from SPA bundle
+      - name: Preserve full official Enterprise Surveys SPA bundle
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import re, requests, pathlib
+          import requests, pathlib, hashlib
           u='https://www.enterprisesurveys.org/etc.clientlibs/datasites-spa/clientlibs/clientlib-enterprisesurveys-data.js'
-          t=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=60).text
-          terms=['GetEconomyCutsData','GetEconomyIndicatorData','cutsId','cutId','subGroup','subgroup','GetCut','IndicatorData']
-          out=[]
-          for term in terms:
-            out.append('\n### '+term)
-            for i,m in enumerate(re.finditer(term,t,re.I)):
-              if i>=100: break
-              a=max(0,m.start()-1200); b=min(len(t),m.end()+1800)
-              out.append(t[a:b].replace('\n',' '))
-          # Extract every quoted path containing GetEconomy / Cut / Indicator.
-          out.append('\n### QUOTED PATHS')
-          pats=[r'["\']([^"\']*(?:GetEconomy|CutsData|IndicatorData|Cut)[^"\']*)["\']']
-          vals=set()
-          for p in pats:
-            vals.update(re.findall(p,t,re.I))
-          out.extend(sorted(vals))
-          pathlib.Path('wb-js-context.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
-          print('\n'.join(out[-700:]))
+          r=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=60); r.raise_for_status()
+          pathlib.Path('clientlib-enterprisesurveys-data.js').write_bytes(r.content)
+          print('URL',u)
+          print('BYTES',len(r.content))
+          print('SHA256',hashlib.sha256(r.content).hexdigest())
           PY
       - uses: actions/upload-artifact@v7
         with:
           name: worldbank-tbilisi-probe
-          path: wb-js-context.txt
+          path: clientlib-enterprisesurveys-data.js
           if-no-files-found: error
