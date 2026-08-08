@@ -1,100 +1,151 @@
 # Telasi Orkhevi Settlement outage analysis
 
-A reproducible, privacy-conscious analysis of Telasi electricity-interruption SMS notifications centered on Orkhevi Settlement, Samgori District, Tbilisi, Georgia.
+A reproducible, privacy-conscious evidence package about Telasi electricity-interruption notifications centered on **Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
 
 ## Critical interpretation rule
 
-This repository analyzes **SMS notifications and public Telasi outage publications**, not a complete utility outage log.
+This repository contains two distinct primary evidence layers:
 
-For emergency SMS and many Telasi public notices, a stated date/time can be an **estimated restoration time**. It is not automatically a verified outage-start or actual-restoration timestamp. Consequently, the repository does not treat each dated notification/publication as a proven physical outage incident.
+1. **resident-supplied SMS notifications**; and
+2. **Telasi public outage publications/API responses**.
+
+Neither layer is a complete utility incident ledger.
+
+For emergency SMS and many Telasi public notices, the stated date/time is an **estimated restoration time**. It is not automatically an outage-start timestamp or an actual restoration timestamp. The repository therefore does not equate notification/publication dates with distinct physical outage incidents and does not calculate physical outage duration from ETAs.
 
 ## Geographic scope
 
 - Primary locality: **Orkhevi Settlement (ორხევის დასახლება), Tbilisi**
 - [Wikidata: Q130437988](https://www.wikidata.org/entity/Q130437988)
 - `SITE_B`: primary Orkhevi service point
-- `SITE_A`: strongly correlated neighbor-supplied longitudinal series; its exact public location is deliberately not asserted until the subscriber-to-property mapping is privately confirmed.
+- `SITE_A`: neighbor-supplied corroborating longitudinal series; its exact public property/location mapping is intentionally unresolved because the resident receives Telasi messages for more than one property.
 
 See [`SCOPE.md`](SCOPE.md).
 
-## Current resident-SMS evidence
+## Resident-SMS evidence
 
-Combined source-record anchor span: **2024-11-10 through 2026-08-06**.
+Combined source-record anchor span: **2024-11-10 through 2026-08-06**. This is a retrospective transcript span, not a proven complete observation window.
 
 Current curated data contain:
 
-- **22 emergency restoration-ETA notification groups**;
-- **1 network-switching restoration-ETA notification group**;
-- **11 planned-work-related notification groups**, including cancellation signals;
-- **56 individual redacted source-message records** after parsing the supplied transcripts.
+- **56** redacted source-message records;
+- **22** emergency restoration-ETA notification groups;
+- **1** network-switching restoration-ETA group;
+- **11** planned-work-related groups, including cancellation/update signals.
 
-These counts are not claimed to equal the number of physical outage incidents.
+These counts are not claimed to equal the number of physical outages.
+
+Group IDs use a future-safe form such as `G20260805-E01` (`E` emergency, `S` switching, `P` planned) so multiple groups can exist on the same date. The former date-only IDs are retained in `legacy_group_id` for traceability.
+
+## Current descriptive findings
+
+At `SITE_B`, emergency SMS carry restoration ETAs on **4, 5, and 6 August 2026**. This is three emergency notification groups at one service point on three consecutive ETA dates; without SMS receipt/restoration timestamps it is not proof of three distinct physical outage incidents.
+
+For the equal period **1 January–6 August**, the same SITE_A series contains:
+
+- 2025: **7** emergency ETA-date groups;
+- 2026: **9** groups;
+- descriptive change: **+28.6%**.
+
+This is a same-source change in the supplied notification record. Because SITE_A's exact public property mapping is unresolved, it must **not** be restated as an Orkhevi-wide outage-rate increase. No p-value or confidence interval is reported.
+
+During the overlapping emergency period from **2025-12-06 through 2026-08-06**:
+
+- SITE_A: 10 emergency ETA-date groups;
+- SITE_B: 11;
+- shared dates: 10;
+- Jaccard similarity: **10/11 = 0.909**.
+
+All ten shared curated groups have matching ETA-time sets between the two sites. This strongly supports repeated shared affected scope, but does not prove a specific feeder, transformer, substation, or topology.
+
+For planned notices without a cancellation signal in the same curated group, **9 explicit announced windows total 39.0 hours**, mean **4.33 h** and median **4.00 h**. These are announced windows, not measured downtime.
+
+The analysis also prints per-site gaps between emergency **ETA-date notification groups**. Those values must not be described as “an outage every N days,” because SMS completeness and physical-incident identity are unknown.
 
 ## Telasi public API evidence
 
-A separate official-source layer documents Telasi's public power-outage API and preserves dated raw responses under [`data/telasi_api/`](data/telasi_api/).
+[`data/telasi_api/`](data/telasi_api/) documents Telasi's public power-outage API and preserves dated source snapshots.
 
-The successful Orkhevi text-search snapshot captured on **2026-08-08** returned **17 public Telasi publications** in `content.list`: 13 carrying observed taxonomy ID `2770` and 4 carrying `2769`. These are **search hits/publications, not 17 proven outages of the user's service point or the settlement**.
+The canonical Orkhevi text-search response captured on **2026-08-08** contains **17 public Telasi publications** in `content.list`:
 
-The repository preserves the original captured response reversibly with SHA-256 provenance and includes a UTF-8-safe standard-library client in [`scripts/fetch_telasi_api.py`](scripts/fetch_telasi_api.py). See [`data/telasi_api/README.md`](data/telasi_api/README.md) for request payloads, response semantics, the Georgian Unicode/cURL import caveat, snapshot reconstruction, and taxonomy/geographic limitations.
+- 13 with observed taxonomy ID `2770`;
+- 4 with observed taxonomy ID `2769`.
 
-## August 2026 pattern
+A text hit for `ორხევი` can refer to the settlement, industrial zone, named roads/exits, or other Orkhevi-associated wording. Therefore 17 search hits are **not 17 outages of SITE_B and not 17 settlement-wide outages**.
 
-At `SITE_B`, emergency notifications carry restoration-ETA dates on:
+Exploratory general-list responses on the same date reported `content.listCount = 889`, but the reviewed exploratory probe artifact contains only **page 1** (12 or 100 records depending on payload). The repository therefore **does not claim that a complete 889-publication historical snapshot was preserved**. The current client has an explicit `--all-pages` mode that paginates until the API-reported total is reconstructed or fails closed.
 
-- 2026-07-14
-- 2026-08-04
-- 2026-08-05
-- 2026-08-06
+The API contains source-side anomalies, including publication timestamps later than stated ETAs and at least one January 2026 publication whose body contains an ETA year of 2025. Parsers preserve those values literally rather than silently correcting Telasi's source data.
 
-Thus the supplied SMS record contains **three emergency notification groups at the same service point with restoration ETAs on three consecutive dates, 4-6 August 2026**.
-
-Without receipt timestamps and confirmed restoration between the messages, this must not be restated as proven evidence of three distinct physical outages.
+See [`data/telasi_api/README.md`](data/telasi_api/README.md) and [`reports/telasi-api-findings-2026-08-08.md`](reports/telasi-api-findings-2026-08-08.md).
 
 ## Repository structure
 
 - `data/source_transcripts/` — redacted resident-supplied SMS transcripts.
-- `data/derived/notifications.csv` — reproducibly parsed one-row-per-message data.
-- `data/derived/notification_groups.csv` — manually reviewed grouped notification evidence.
-- `data/telasi_api/` — Telasi public API documentation and dated raw snapshots.
-- `data/site_metadata.csv` — source roles and coverage cautions.
-- `data/external_context.csv` — separately sourced nationwide-grid context.
-- `scripts/build_notifications.py` — transcript parser.
-- `scripts/fetch_telasi_api.py` — fetch/normalize Telasi's public outage-publication API.
-- `scripts/analyze.py` — descriptive analysis using consistent-source comparisons and complete windows.
-- `scripts/validate.py` — provenance/privacy/schema consistency checks.
-- `tests/test_pipeline.py` — regression tests.
-- `METHODOLOGY.md` — detailed analytical rules and limitations.
-- `PROVENANCE.md` — source and transformation provenance.
-- `SCOPE.md` — geographic/evidentiary scope.
-- `PRIVACY.md` — privacy constraints.
-- `LICENSE-SCOPE.md` — scope of the MIT grant and third-party source exclusions.
+- `data/derived/notifications.csv` — reproducibly parsed one-row-per-message table.
+- `data/derived/notification_groups.csv` — manually reviewed grouped SMS evidence.
+- `data/telasi_api/` — Telasi public API documentation and a cryptographically verified canonical raw snapshot plus provenance metadata for exploratory probes.
+- `data/site_metadata.csv` — source roles and geographic cautions.
+- `data/external_context.csv` — separately sourced system-level context.
+- `scripts/build_notifications.py` — resident transcript parser.
+- `scripts/analyze.py` — conservative descriptive analysis.
+- `scripts/validate.py` — SMS/group/API provenance, schema, privacy, arithmetic and hash validation.
+- `scripts/fetch_telasi_api.py` — UTF-8-safe Telasi API fetcher/normalizer with real pagination.
+- `scripts/compare_telasi_api_sms.py` — exact ETA corroboration helper; corpus-wide negative conclusions require a complete paginated fetch.
+- `scripts/reconstruct_telasi_api_snapshot.py` — cross-platform reconstruction and verification of the canonical raw API snapshot.
+- `tests/` — offline regression tests for SMS analysis, window logic and API fixtures/pagination.
+- `.github/workflows/quality.yml` — offline reproducibility checks.
+- `.github/workflows/telasi-api-live-probe.yml` — live API semantics/pagination probe.
 
-## Reproduce
+## Reproduce offline
+
+No third-party Python packages are required.
 
 ```bash
 python scripts/build_notifications.py
 python scripts/validate.py
 python -m unittest discover -s tests -v
-python scripts/analyze.py
-python scripts/fetch_telasi_api.py --search-text "ორხევი" --output-dir artifacts/telasi_api
+python scripts/analyze.py --output reports/analysis-output.txt
+python scripts/reconstruct_telasi_api_snapshot.py
 ```
 
-No third-party Python packages are required for the repository scripts.
+`quality.yml` additionally fails if rebuilding changes committed `notifications.csv` or `reports/analysis-output.txt`.
 
-## Statistical posture
+## Fetch live Telasi data
 
-The repository currently reports descriptive statistics only.
+Search Orkhevi:
 
-A same-source comparison for SITE_A gives:
+```bash
+python scripts/fetch_telasi_api.py \
+  --search-text "ორხევი" \
+  --output-dir artifacts/telasi_api/orkhevi
+```
 
-- Jan 1-Aug 6, 2025: 7 emergency restoration-ETA groups
-- Jan 1-Aug 6, 2026: 9 groups
+Fetch every currently reported list page:
 
-That is a descriptive increase of 28.6% in the supplied notification record. No p-value or confidence interval is presented because completeness of notification capture and independence of events are not established.
+```bash
+python scripts/fetch_telasi_api.py \
+  --all-pages \
+  --per-page 100 \
+  --output-dir artifacts/telasi_api/all
+```
+
+Compare a **complete** live corpus with resident SMS ETAs:
+
+```bash
+python scripts/compare_telasi_api_sms.py \
+  --api-dir artifacts/telasi_api/all \
+  --orkhevi-dir artifacts/telasi_api/orkhevi \
+  --require-complete \
+  --output artifacts/telasi_api/comparison.json
+```
+
+`artifacts/` is ignored by Git to prevent transient live responses from being accidentally published as curated source snapshots.
+
+## Unsupported reliability claims
+
+The current evidence is insufficient for defensible calculation of physical outage count, mean physical outage duration, SAIDI, SAIFI, CAIDI, or MTTR. Those require authoritative interruption start/restoration timestamps and a defined affected-customer population, or equivalent independent monitoring.
 
 ## License
 
-The repository includes the MIT License for original software/scripts and analytical material authored by the repository owner.
-
-Third-party SMS transcript text under `data/source_transcripts/` and raw Telasi API/publication material under `data/telasi_api/raw/` are excluded from that repository-owner MIT grant. See [`LICENSE-SCOPE.md`](LICENSE-SCOPE.md).
+The repository's MIT License covers original scripts/software and analytical material authored by the repository owner. Third-party SMS text and raw Telasi API/publication material are excluded from that repository-owner MIT grant. See [`LICENSE-SCOPE.md`](LICENSE-SCOPE.md).

@@ -7,16 +7,13 @@ if (-not (Test-Path ".\README.md")) {
 python .\scripts\build_notifications.py
 python .\scripts\validate.py
 python -m unittest discover -s tests -v
+python .\scripts\analyze.py --output .\reports\analysis-output.txt
 
-if (-not (Test-Path ".git")) {
-    git init
-    git branch -M main
-}
-
-git add .
-$changes = git status --porcelain
-if ($changes) {
-    git commit -m "Update Orkhevi outage notification dataset and methodology"
+# API runtime output belongs under ignored artifacts/; private mappings are ignored.
+git add -A
+$staged = git diff --cached --name-only
+if ($staged) {
+    git commit -m "Update Orkhevi outage evidence and reproducible analysis"
 }
 
 $origin = git remote get-url origin 2>$null

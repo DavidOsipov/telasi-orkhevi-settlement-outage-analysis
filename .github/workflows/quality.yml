@@ -1,0 +1,24 @@
+name: Reproducibility checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-reproducibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Rebuild resident notification table
+        run: python3 scripts/build_notifications.py
+      - name: Validate evidence and raw API snapshots
+        run: python3 scripts/validate.py
+      - name: Run regression tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Regenerate statistical output
+        run: python3 scripts/analyze.py --output reports/analysis-output.txt
+      - name: Assert generated files are committed and byte-stable
+        run: git diff --exit-code -- data/derived/notifications.csv reports/analysis-output.txt

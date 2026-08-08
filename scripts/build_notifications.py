@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import csv, re, hashlib
-from datetime import datetime
+from datetime import date
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "data" / "source_transcripts"
@@ -33,22 +33,25 @@ def iso_date_from_token(token):
     m = re.fullmatch(r'(\d{1,2})/(\d{1,2})/(\d{4})', token)
     if m:
         d, mo, y = map(int, m.groups())
-        return f"{y:04d}-{mo:02d}-{d:02d}"
+        return date(y, mo, d).isoformat()
     # DD.MM.YYYY
     m = re.fullmatch(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', token)
     if m:
         d, mo, y = map(int, m.groups())
-        return f"{y:04d}-{mo:02d}-{d:02d}"
+        return date(y, mo, d).isoformat()
     # DD-Mon-YYYY
     m = re.fullmatch(r'(\d{1,2})-([A-Za-z]{3})-(\d{4})', token)
     if m:
         d, mon, y = m.groups()
-        return f"{int(y):04d}-{MONTHS[mon.lower()]:02d}-{int(d):02d}"
+        key = mon.lower()
+        if key not in MONTHS:
+            raise ValueError(f"Unsupported month token: {mon!r}")
+        return date(int(y), MONTHS[key], int(d)).isoformat()
     # DD-MM-YY
     m = re.fullmatch(r'(\d{1,2})-(\d{1,2})-(\d{2})', token)
     if m:
         d, mo, y = map(int, m.groups())
-        return f"{2000+y:04d}-{mo:02d}-{d:02d}"
+        return date(2000 + y, mo, d).isoformat()
     raise ValueError(f"Unsupported date token: {token!r}")
 
 def classify(text):
@@ -133,7 +136,7 @@ for site_id, path in SOURCES:
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 with OUT.open("w", newline="", encoding="utf-8") as f:
-    w = csv.DictWriter(f, fieldnames=list(rows[0]))
+    w = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
 

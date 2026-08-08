@@ -2,130 +2,181 @@
 
 ## 1. Evidence model
 
-This repository separates three layers that must not be conflated:
+The repository separates evidence layers that must not be silently conflated:
 
-1. **Source transcript message** — one redacted SMS text block supplied by a resident.
-2. **Notification group** — a manually reviewed grouping of one or more SMS messages that appear to refer to the same scheduled date or the same emergency restoration-ETA date.
-3. **Outage incident** — a real interruption of electricity supply.
+1. **Resident source message** — one redacted SMS text block supplied by a resident.
+2. **Resident notification group** — a manually reviewed grouping of one or more resident SMS messages that appear to concern the same scheduled date or emergency restoration-ETA date.
+3. **Telasi public publication** — one website/API publication exposed by Telasi's public system. It can describe an affected area and an ETA/window but is not automatically subscriber-specific.
+4. **Physical outage incident** — an actual interruption of electricity supply.
+5. **External/system context** — regulator or transmission-system information stored separately and not automatically attributed as the cause of a local notification.
 
-The repository directly contains evidence for layers 1 and 2. It does **not** have enough metadata to identify layer 3 reliably in every case.
+The repository directly preserves evidence for layers 1–3 and contextual sources for layer 5. It does **not** have enough metadata to identify layer 4 reliably in every case.
 
-Accordingly, `notification_groups.csv` is **not an outage-event log**.
+Accordingly, neither `notification_groups.csv` nor Telasi `content.list` is treated as an authoritative outage-event ledger.
 
-## 2. Meaning of dates
+## 2. Meaning of resident SMS dates
 
-For emergency SMS, the date/time in the Telasi text is described as the **estimated time of restoration** (`energomomaragebis agdgenis savaraudo droa`).
+For emergency SMS, the Telasi wording describes the date/time as the **estimated restoration time** (`energomomaragebis agdgenis savaraudo droa`).
 
 Therefore:
 
-- an emergency `anchor_date` is a `restoration_eta_date`;
-- it is **not** treated as a verified outage-start date;
-- the repository does not claim that the interruption necessarily began on that same calendar date.
+- emergency `anchor_date` is `restoration_eta_date`;
+- it is not a verified outage-start date;
+- the interruption may have begun on a different calendar date;
+- an ETA is not an actual restoration timestamp.
 
 For planned-work messages, the anchor date is the explicitly scheduled interruption date.
 
-## 3. Classification
+## 3. Resident message classification
 
-Message-level classification is based on the wording in the supplied transliteration:
+Message-level classification is based on wording in the supplied transliteration:
 
-- `emergency`: contains `avariuli gamortvis` or an explicit emergency cause such as high-voltage cable damage;
+- `emergency`: contains `avariuli gamortvis` or a direct emergency cause such as high-voltage cable damage;
 - `network_switching`: interruption attributed to `qselshi gadartvis`;
-- `planned_notice`: advance notice of work with a scheduled interruption window;
-- `planned_cancellation`: explicit cancellation/postponement wording;
+- `planned_notice`: advance notice with a scheduled interruption window;
+- `planned_cancellation`: explicit cancellation/postponement;
 - `planned_update`: update about planned-work completion without a complete standalone date/window.
 
 `network_switching` remains separate from `emergency`.
 
-## 4. Grouping and duplicates
+## 4. Grouping, identifiers and duplicates
 
-Exact duplicate SMS messages are preserved in `notifications.csv` and may be grouped together in `notification_groups.csv`.
+Exact duplicate SMS messages remain present in `notifications.csv` and can be grouped together in `notification_groups.csv`.
 
 Same-day ETA messages may represent:
 
-- an updated ETA for one incident;
-- more than one incident on the same day;
+- one incident with a revised ETA;
+- multiple incidents on the same day;
 - duplicated notification delivery.
 
-When the supplied evidence cannot distinguish these, the group is marked ambiguous.
+When the evidence cannot distinguish these, ambiguity is preserved.
 
 Examples:
 
-- 2025-06-28: ETA 01:18 and 17:43, `incident_count_min=1`, `incident_count_max=2`.
-- 2026-01-22: ETA 12:00 and 20:00 at both sites. The later clock time may be a revised ETA, but receipt timestamps are absent.
-- 2026-04-07: ETA 19:33 and 22:29 at both sites; SITE_A also contains an exact duplicate 22:29 SMS.
+- 2025-06-28: ETA 01:18 and 17:43, `incident_count_min=1`, `incident_count_max=2`;
+- 2026-01-22: ETA 12:00 and 20:00 at both sites; update ordering is plausible but receipt timestamps are absent;
+- 2026-04-07: ETA 19:33 and 22:29 at both sites, plus an exact duplicate 22:29 SMS at SITE_A.
 
-Different emergency anchor dates are kept as different **notification groups**, but they are not automatically asserted to be different physical outage incidents. A prolonged multi-day incident with repeated ETA updates cannot be excluded from transcript text alone.
+Group IDs use `GYYYYMMDD-XNN`, where `X` is `E` (emergency), `S` (network switching) or `P` (planned). This prevents the data model from reintroducing the false assumption “one calendar date = one group.” The old date-only ID is preserved as `legacy_group_id` for traceability.
+
+Different groups are not automatically distinct physical incidents.
 
 ## 5. Completeness and bias
 
-The supplied material is a retrospective SMS transcript, not a prospectively monitored outage sensor.
+The resident material is a retrospective SMS transcript, not a prospectively monitored outage sensor.
 
-Known incompleteness:
+Known limitations include:
 
-- some real outages may generate no SMS;
-- messages may be missing from the supplied archive;
+- real outages can occur without an SMS;
+- messages can be missing from the supplied archive;
 - SMS receipt timestamps are absent;
-- actual restoration timestamps are absent.
+- actual restoration timestamps are absent;
+- one incident can generate multiple messages/ETA updates.
 
-Potential bias is therefore **not guaranteed to be one-directional**. Missing notifications can undercount outage incidents, while unrecognized updates or duplicates can overcount them.
-
-The repository must not describe the notification-group count as a proven lower bound on the number of real outage incidents.
+Bias is therefore not guaranteed to be one-directional. Missing notifications can undercount incidents, while unrecognized updates/duplicates can overcount them. Notification-group count is not described as a proven lower or upper bound on physical outage count.
 
 ## 6. Cross-site corroboration
 
-The two supplied series overlap strongly from late 2025 onward. Ten emergency restoration-ETA dates are shared by SITE_A and SITE_B, often with identical ETA times to the minute.
+In the overlapping emergency period from 2025-12-06 through 2026-08-06, SITE_A and SITE_B share ten emergency restoration-ETA dates, and all ten shared groups have matching ETA-time sets to the minute.
 
-This is strong evidence that the two service points repeatedly received notifications associated with the same affected scope. It is consistent with a shared upstream distribution-domain explanation.
+This is strong evidence that both service points repeatedly received notifications associated with the same affected scope. It is consistent with a shared upstream distribution-domain explanation.
 
-It does **not** prove a specific feeder, transformer, substation, or network topology. It also does not, by itself, prove the public location of SITE_A.
+It does **not** establish a specific feeder, transformer, substation, or exact topology. It also does not establish SITE_A's public location.
 
 ## 7. Comparisons over time
 
 Comparisons must use the same evidence source on both sides.
 
-The old comparison of 7 emergency groups in 2025 with 10 in 2026 mixed:
+The corrected equal-period comparison uses SITE_A only:
 
-- SITE_A-only coverage in most of 2025; and
-- the union of SITE_A and SITE_B in 2026.
+- 2025-01-01 through 2025-08-06: 7 emergency ETA-date groups;
+- 2026-01-01 through 2026-08-06: 9 groups;
+- descriptive change: +28.6%.
 
-That comparison was invalid because ascertainment changed.
+This is not presented as a statistically established change in true outage rate because notification completeness, independence and stationarity are unknown.
 
-The corrected descriptive comparison uses SITE_A only:
+Additionally, SITE_A's exact public property/location mapping remains unresolved. The 7→9 comparison is therefore a same-source longitudinal observation and must not be restated as an Orkhevi-wide rate change without privately confirming the mapping.
 
-- 2025-01-01 through 2025-08-06: 7 emergency restoration-ETA groups;
-- 2026-01-01 through 2026-08-06: 9 groups.
+No p-value or confidence interval is reported.
 
-This is a descriptive +28.6% change in recorded groups. It is **not** presented as a statistically established change in true outage rate because notification completeness, independence, and stationarity are not established.
+## 8. Gap and cluster analysis
 
-No p-value or confidence interval is reported for the current dataset.
+Gap summaries are calculated **separately per site** from emergency ETA-date notification groups. The combined stitched A/B series is not used as a headline “average recurrence” metric.
 
-## 8. Cluster analysis
+Even per-site gaps are notification-date gaps, not verified physical-outage inter-arrival times. They must not be phrased as “an outage every N days.”
 
-Sliding-window cluster counts use only **complete calendar windows** contained in the supplied record span. Windows are never allowed to extend beyond the last supplied anchor date.
+Sliding-window cluster counts use only calendar windows fully contained within the supplied anchor span for the relevant site. The implementation counts **group rows**, not a set of dates, so multiple future groups on one date will not be silently collapsed.
 
-The notable 4-6 August 2026 pattern is evaluated at SITE_B itself: SITE_B has emergency notifications whose restoration ETAs fall on 4, 5, and 6 August.
+The 4–6 August 2026 feature at SITE_B supports only the statement:
 
-This supports the descriptive statement:
+> Three emergency SMS notification groups at the same service point carried restoration-ETA dates on three consecutive calendar dates.
 
-> Three emergency SMS notification groups at the same service point carried restoration-ETA dates on three consecutive calendar days.
+Without receipt timestamps and confirmed restorations between messages, this is not elevated to “three distinct outages on three consecutive days.”
 
-Without receipt timestamps and confirmed restorations between messages, the repository does not elevate that statement to “three distinct outage incidents on three consecutive days.”
+## 9. Planned-work windows
 
-## 9. Planned-work hours
+Scheduled-window hours describe what notices announced, not measured downtime.
 
-Scheduled-window hours describe what the notice announced. They are not measured downtime.
+The undated SITE_A planned-work update saying completion moved to 16:00 is not silently attached to 2025-11-02 for numeric totals. The explicit 2025-11-02 notice remains 11:00–14:00 (3 h).
 
-The undated SITE_A planned-work update saying completion moved to 16:00 is not silently attached to 2025-11-02 for numeric totals. The explicit 2025-11-02 notice remains 11:00-14:00 (3 h); the possible association is documented separately.
+For the current nine planned groups without a cancellation signal in the same curated group, explicit announced windows total 39.0 h, mean 4.33 h, median 4.00 h.
 
-## 10. Reliability metrics that cannot be calculated
+The validator recomputes every stored planned-window duration and checks it against the supporting message windows.
 
-This evidence is insufficient for official or defensible calculation of:
+## 10. Telasi public API semantics
 
+The public endpoint observed is:
+
+`POST https://app.telasi.ge/api/view/telasi/getPoweroutages`
+
+For the captured request shapes, records are in `content.list`; the parallel `api.list` is empty.
+
+Search mode and list/pagination mode are separate frontend request shapes. Georgian `searchText` must remain UTF-8; a Copy-as-cURL → Postman import was observed mangling it.
+
+A public API row is a **publication**, not a physical outage incident. Text search for `ორხევი` is not an electrical-topology query.
+
+For unplanned publications, `scripts/fetch_telasi_api.py` extracts the explicitly stated restoration ETA from `editor`. Parsed source values are preserved even when they appear internally inconsistent. Examples in the 2026-08-08 snapshot include publication timestamps later than the body ETA and a January 2026 publication whose body contains an ETA year of 2025.
+
+### Pagination completeness
+
+`content.listCount` is a reported total, not proof that one response contains that many records. An exploratory request on 2026-08-08 reported 889 but returned only 100 page-1 records.
+
+The current `--all-pages` implementation therefore:
+
+- preserves each raw page;
+- follows page numbers until all API-reported records are reconstructed;
+- detects server-side `perPage` caps from actual returned page size;
+- deduplicates by publication ID for pagination stability;
+- records stop reason and raw-page hashes;
+- fails closed if fetched unique count does not equal the reported total.
+
+A corpus-wide negative statement such as “no exact API ETA match exists” is allowed only when comparison metadata proves a complete paginated fetch against the API-reported total. Positive exact matches remain useful even with a partial corpus.
+
+## 11. Raw API provenance
+
+The canonical 17-hit Orkhevi response is preserved byte-for-byte under `data/telasi_api/raw/2026-08-08/` with byte counts, SHA-256 digests and Git blob SHA-1 values. Exploratory probe responses remain in the cited GitHub Actions artifact; their request shapes, byte lengths, SHA-256 hashes and parsed counts are retained in `MANIFEST.json`.
+
+`validate.py` reconstructs and verifies the canonical in-repo snapshot offline and sanity-checks the retained exploratory observations. `scripts/reconstruct_telasi_api_snapshot.py` provides a standalone cross-platform reconstruction path for the canonical response.
+
+Browser netlogs are intentionally excluded because they can contain unrelated/private request metadata; relevant endpoint, payload and header semantics are documented separately.
+
+## 12. Reliability metrics not supported by current evidence
+
+Current evidence is insufficient for defensible calculation of:
+
+- physical outage count;
+- mean physical outage duration;
 - SAIDI;
 - SAIFI;
 - CAIDI;
-- MTTR;
-- mean physical outage duration;
-- complete physical outage count.
+- MTTR.
 
-Those require authoritative interruption start/restoration timestamps and a defined customer population, or equivalent high-quality monitoring data.
+Those require authoritative interruption start/restoration timestamps and a defined customer population, or equivalent independent monitoring.
+
+## 13. Reproducibility controls
+
+- CSV generation uses explicit LF line endings for byte-stable cross-platform output.
+- `validate.py` rebuilds resident derived data and verifies group/source consistency, ETA sets, planned-window arithmetic, privacy rules and API snapshot hashes.
+- Unit tests cover current statistical invariants, same-day multi-group window counting, API fixture parsing, source-side anomaly preservation and mocked pagination under a server-side page-size cap.
+- `scripts/analyze.py --output reports/analysis-output.txt` regenerates the committed analysis report.
+- GitHub Actions fails if regenerated derived/report files differ from the committed versions.

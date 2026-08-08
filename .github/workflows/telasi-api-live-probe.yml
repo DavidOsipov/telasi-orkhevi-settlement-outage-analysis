@@ -1,0 +1,53 @@
+name: Telasi API live probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Fetch Orkhevi text-search result
+        run: >-
+          python3 scripts/fetch_telasi_api.py
+          --search-text "ორხევი"
+          --output-dir artifacts/telasi_api/orkhevi
+      - name: Fetch every currently reported list page
+        run: >-
+          python3 scripts/fetch_telasi_api.py
+          --all-pages
+          --per-page 100
+          --output-dir artifacts/telasi_api/all
+      - name: Compare complete live publication corpus to resident SMS ETAs
+        run: >-
+          python3 scripts/compare_telasi_api_sms.py
+          --api-dir artifacts/telasi_api/all
+          --orkhevi-dir artifacts/telasi_api/orkhevi
+          --require-complete
+          --output artifacts/telasi_api/comparison.json
+      - name: Assert semantic rather than historical-count invariants
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("artifacts/telasi_api")
+          all_meta = json.loads((root / "all" / "fetch_metadata.json").read_text(encoding="utf-8"))
+          ork_meta = json.loads((root / "orkhevi" / "fetch_metadata.json").read_text(encoding="utf-8"))
+          comp = json.loads((root / "comparison.json").read_text(encoding="utf-8"))
+          assert all_meta["complete_against_reported_total"] is True
+          assert all_meta["fetched_unique_count"] == all_meta["reported_total"] > 0
+          assert ork_meta["normalized_row_count"] > 0
+          assert comp["api_corpus_complete_against_reported_total"] is True
+          print("Live Telasi API semantic invariants OK")
+          PY
+      - name: Upload live API evidence artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: telasi-api-live-probe
+          path: artifacts/telasi_api/
+          if-no-files-found: error

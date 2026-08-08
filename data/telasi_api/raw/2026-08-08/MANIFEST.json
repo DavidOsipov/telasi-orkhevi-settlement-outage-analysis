@@ -1,54 +1,105 @@
 {
   "snapshot_date": "2026-08-08",
+  "source_layer": "Telasi public website APIs",
   "notes": [
-    "Raw API material is preserved separately from resident SMS evidence.",
-    "The getPoweroutages search response was obtained in Postman after manually re-entering the Georgian UTF-8 searchText because a copied cURL/import path had mangled the query.",
-    "The large getPoweroutages JSON is stored as deterministic gzip, Base64-encoded and split into eight text chunks because the repository write path used for this snapshot was text-only.",
-    "The Git blob SHA-1 of every committed chunk was checked against the locally calculated Git blob SHA-1 for that exact source chunk before this manifest was finalized."
+    "Raw Telasi API material is kept separate from resident SMS evidence.",
+    "The canonical Orkhevi search response is preserved byte-for-byte in this repository and cryptographically validated.",
+    "Exploratory GitHub Actions run 31253449527 originally printed api.listCount/api.list and therefore reported zeros; inspection of its raw artifact showed the actual records under content.listCount/content.list. The incorrect console summary is not treated as data.",
+    "Exploratory probe raw responses are not duplicated in-repo; their GitHub Actions provenance, byte length, SHA-256 and parsed counts are recorded in exploratory_probe_observations.",
+    "The general-list probes reported content.listCount=889 while page 1 contained only 12 or 100 records; therefore 889 is a reported corpus total, not proof that one response contained 889 publications.",
+    "Browser netlogs/HAR-like traces are intentionally not committed because they may contain unrelated request metadata."
   ],
-  "files": [
-    {
-      "logical_name": "getPoweroutages-search-orkhevi.response.json",
-      "stored_as": "getPoweroutages-search-orkhevi.response.json.gz.part-01.b64 through part-08.b64",
-      "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
-      "method": "POST",
-      "payload": {"contentType": "poweroutage", "searchText": "ორხევი"},
-      "observed_response": {
-        "content_listCount": 17,
-        "content_list_length": 17,
-        "api_listCount": 0,
-        "api_list_length": 0,
-        "taxonomy_2770_rows": 13,
-        "taxonomy_2769_rows": 4
-      },
-      "original_json_bytes": 295834,
-      "original_json_sha256": "99e9f1a1331b97300bc1984304c2d71db8acd46fbf543a8ff0e45d3eecf0cb89",
-      "gzip_bytes": 22140,
-      "gzip_sha256": "f30e8c6cb6d72866ac53767164965c27b29191107c739dad5b89e3b9a4797b92",
-      "base64_text_bytes": 29520,
-      "base64_text_sha256": "ca426bbbd50d9a4bacbc90252d00aa4aa5f445875f9ef8e290570609ddb51029",
-      "chunks": [
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-01.b64", "bytes": 4096, "sha256": "22e760c357bf1f35e58d15c6b5345049923a09e295f37f608e2d87f99ad6730c", "git_blob_sha1": "9af4035e68123eb5ba4c0e3aa749a275b81955cb"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-02.b64", "bytes": 4096, "sha256": "d6f4dd847ec3205527099defd250d0667e9c799cb2e26fef2bbfd1cd41d87bcf", "git_blob_sha1": "e73116e5112e65a8ac1759d5b5420ebe52372c00"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-03.b64", "bytes": 4096, "sha256": "6fdf6ed0e81a9e06fda9a0dbe94ee75b1150b5ff7b0a0b11e1acd3d3331d8909", "git_blob_sha1": "8f65474859aa052b5ba40eb0db79c54708d5c281"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-04.b64", "bytes": 4096, "sha256": "f011facb4199b8493a4894e478f94781600bd968a1840cc4012cf1c007406be7", "git_blob_sha1": "0e9aa2436c73183a3d50ca58aa8f7b613566e853"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-05.b64", "bytes": 4096, "sha256": "e10df17eb8a41c66f21f52648fe9c5590385c946ba163575f245ed27164e4058", "git_blob_sha1": "cb54276cd0b46fb12daf6e2ebdeffbd85a626856"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-06.b64", "bytes": 4096, "sha256": "38c117f41906a562cbf03d40174b11eba2c9fe3b07c3688e878f4dc36ead2bf3", "git_blob_sha1": "bb735b59c46d79c74d03dcb1c94359566c93aeac"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-07.b64", "bytes": 4096, "sha256": "13bc738d585049fbd95846705f9a3610d42c52ca32731ba4ae6d0dd876b2d522", "git_blob_sha1": "f265af304bf004c6b364202cc7901a05eefe17c1"},
-        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-08.b64", "bytes": 848, "sha256": "fde53430474fe9176ef53533b8bdbaba95f7d4248c6df29e986ee29aceb471d0", "git_blob_sha1": "cb412cd54cddd82506a936fabd585f5bde04450e"}
-      ],
-      "capture_method": "Postman response supplied by repository owner"
+  "canonical_orkhevi_search": {
+    "logical_name": "getPoweroutages-search-orkhevi.response.json",
+    "stored_as": "getPoweroutages-search-orkhevi.response.json.gz.part-01.b64 through part-08.b64",
+    "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
+    "method": "POST",
+    "headers_of_interest": {
+      "Content-Type": "application/json",
+      "lang": "ka"
     },
-    {
-      "path": "getMtData-content-5584.response.json",
-      "endpoint": "https://www.telasi.ge/api/getMtData",
-      "method": "POST",
-      "payload": {"url": "/company-news/power-outage?content=5584", "lang": "ka"},
-      "original_json_bytes": 2641,
-      "original_json_sha256": "9df4be2583528e9ce7639f55f2d065ddc301adfe49a63933c269805be02f4e54",
-      "capture_method": "GitHub Actions API probe",
-      "workflow_run_id": 31253449527,
-      "interpretation": "Nuxt/page metadata only; outage publication body is not returned by this endpoint in the captured response."
-    }
-  ]
+    "payload": {
+      "contentType": "poweroutage",
+      "searchText": "ორხევი"
+    },
+    "observed_response": {
+      "content_listCount": 17,
+      "content_list_length": 17,
+      "api_listCount": 0,
+      "api_list_length": 0,
+      "taxonomy_2770_rows": 13,
+      "taxonomy_2769_rows": 4
+    },
+    "original_json_bytes": 295834,
+    "original_json_sha256": "99e9f1a1331b97300bc1984304c2d71db8acd46fbf543a8ff0e45d3eecf0cb89",
+    "gzip_bytes": 22140,
+    "gzip_sha256": "f30e8c6cb6d72866ac53767164965c27b29191107c739dad5b89e3b9a4797b92",
+    "base64_text_bytes": 29520,
+    "base64_text_sha256": "ca426bbbd50d9a4bacbc90252d00aa4aa5f445875f9ef8e290570609ddb51029",
+    "chunks": [
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-01.b64", "bytes": 4096, "sha256": "22e760c357bf1f35e58d15c6b5345049923a09e295f37f608e2d87f99ad6730c", "git_blob_sha1": "9af4035e68123eb5ba4c0e3aa749a275b81955cb"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-02.b64", "bytes": 4096, "sha256": "d6f4dd847ec3205527099defd250d0667e9c799cb2e26fef2bbfd1cd41d87bcf", "git_blob_sha1": "e73116e5112e65a8ac1759d5b5420ebe52372c00"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-03.b64", "bytes": 4096, "sha256": "6fdf6ed0e81a9e06fda9a0dbe94ee75b1150b5ff7b0a0b11e1acd3d3331d8909", "git_blob_sha1": "8f65474859aa052b5ba40eb0db79c54708d5c281"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-04.b64", "bytes": 4096, "sha256": "f011facb4199b8493a4894e478f94781600bd968a1840cc4012cf1c007406be7", "git_blob_sha1": "0e9aa2436c73183a3d50ca58aa8f7b613566e853"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-05.b64", "bytes": 4096, "sha256": "e10df17eb8a41c66f21f52648fe9c5590385c946ba163575f245ed27164e4058", "git_blob_sha1": "cb54276cd0b46fb12daf6e2ebdeffbd85a626856"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-06.b64", "bytes": 4096, "sha256": "38c117f41906a562cbf03d40174b11eba2c9fe3b07c3688e878f4dc36ead2bf3", "git_blob_sha1": "bb735b59c46d79c74d03dcb1c94359566c93aeac"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-07.b64", "bytes": 4096, "sha256": "13bc738d585049fbd95846705f9a3610d42c52ca32731ba4ae6d0dd876b2d522", "git_blob_sha1": "f265af304bf004c6b364202cc7901a05eefe17c1"},
+      {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-08.b64", "bytes": 848, "sha256": "fde53430474fe9176ef53533b8bdbaba95f7d4248c6df29e986ee29aceb471d0", "git_blob_sha1": "cb412cd54cddd82506a936fabd585f5bde04450e"}
+    ],
+    "capture_method": "Postman response supplied by repository owner"
+  },
+  "getMtData_probe": {
+    "path": "getMtData-content-5584.response.json",
+    "endpoint": "https://www.telasi.ge/api/getMtData",
+    "method": "POST",
+    "payload": {"url": "/company-news/power-outage?content=5584", "lang": "ka"},
+    "original_json_bytes": 2641,
+    "original_json_sha256": "9df4be2583528e9ce7639f55f2d065ddc301adfe49a63933c269805be02f4e54",
+    "git_blob_sha1": "da51124b18beec7bb3b49e1b96d02f5e5d8f457d",
+    "capture_method": "GitHub Actions run 31253449527",
+    "interpretation": "Nuxt/page metadata only; the outage publication body is already present in getPoweroutages content.list[].editor."
+  },
+  "exploratory_probe_observations": {
+    "github_actions_run_id": 31253449527,
+    "artifact_id": 9020698787,
+    "retention_note": "Raw exploratory responses were inspected from the GitHub Actions artifact but are not duplicated in the repository. Their byte size/SHA-256 and parsed response counts are retained here. The canonical Orkhevi search response remains byte-for-byte preserved in-repo.",
+    "responses": [
+      {
+        "logical_path": "probes/getPoweroutages-list-user-exact.response.json.gz.b64",
+        "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
+        "method": "POST",
+        "payload": {"searchText": "", "pageNumber": 1, "perPage": 12, "selectedlan": "ka", "taxonomy": {"content_poweroutage": [2769,2770]}},
+        "original_json_bytes": 68134,
+        "original_json_sha256": "6bcd91255941cdd4dd08ec0ac5e0ddc727c6c54d916ed351c8a8731abee5a3e1",
+        "observed_response": {"content_listCount": 889, "content_list_length": 12, "content_page": 1, "api_listCount": 0, "api_list_length": 0}
+      },
+      {
+        "logical_path": "probes/getPoweroutages-taxonomy-search.response.json.gz.b64",
+        "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
+        "method": "POST",
+        "payload": {"searchText": "ორხევ", "pageNumber": 1, "perPage": 100, "selectedlan": "ka", "taxonomy": {"content_poweroutage": [2769,2770]}},
+        "original_json_bytes": 295623,
+        "original_json_sha256": "c4c59e5deb1d408391d3c4d598597b328e4bfae5d47409e90cf399a8cd995733",
+        "observed_response": {"content_listCount": 17, "content_list_length": 17, "content_page": 1, "api_listCount": 0, "api_list_length": 0}
+      },
+      {
+        "logical_path": "probes/getPoweroutages-contenttype-taxonomy-search.response.json.gz.b64",
+        "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
+        "method": "POST",
+        "payload": {"contentType": "poweroutage", "searchText": "ორხევ", "pageNumber": 1, "perPage": 100, "selectedlan": "ka", "taxonomy": {"content_poweroutage": [2769,2770]}},
+        "original_json_bytes": 295623,
+        "original_json_sha256": "c4c59e5deb1d408391d3c4d598597b328e4bfae5d47409e90cf399a8cd995733",
+        "observed_response": {"content_listCount": 17, "content_list_length": 17, "content_page": 1, "api_listCount": 0, "api_list_length": 0}
+      },
+      {
+        "logical_path": "probes/getPoweroutages-contenttype-all.response.json.gz.b64",
+        "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
+        "method": "POST",
+        "payload": {"contentType": "poweroutage", "searchText": "", "pageNumber": 1, "perPage": 100, "selectedlan": "ka", "taxonomy": {"content_poweroutage": [2769,2770]}},
+        "original_json_bytes": 744519,
+        "original_json_sha256": "5bcdb41dc0d45aafb969eac3a11afed833cd7a7c7d8e557d647f4802e64e15ea",
+        "observed_response": {"content_listCount": 889, "content_list_length": 100, "content_page": 1, "api_listCount": 0, "api_list_length": 0}
+      }
+    ]
+  }
 }

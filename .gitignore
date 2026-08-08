@@ -9,3 +9,11 @@ __pycache__/
 
 # Generated figures
 reports/figures/
+
+# Generated API/runtime artifacts
+artifacts/
+
+# Browser/network traces may contain cookies or unrelated metadata; review before force-adding
+*.har
+*netlog*.json
+chrome-netlog.json
