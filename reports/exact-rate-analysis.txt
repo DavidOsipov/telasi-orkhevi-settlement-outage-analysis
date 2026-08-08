@@ -1,34 +1,47 @@
 Exact descriptive rate analysis
 ===============================
 
-Emergency rows are curated restoration-ETA notification groups, not proven distinct physical outages. The supplied transcript span is not a proven complete observation window.
+same Orkhevi building; separate resident/subscriber SMS archives.
+SITE_A/SITE_B are retained for stable references but must not be interpreted as two geographic sites.
+Emergency rows are curated restoration-ETA notification groups, not proven distinct physical outages. Archive completeness is not established.
 
-Canonical arithmetic rule: reduced fractions are exact; decimal_12dp values are rounded presentation only.
+SITE_A / neighbor resident archive (same building; longest single-source record):
+  groups: 21
+  first..last anchor: 2024-11-10 .. 2026-08-06
+  elapsed days: 634
+  inter-arrival intervals: 20
+  exact mean gap: 317/10 = 31.7 days
+  exact mean-Gregorian-month normalized rate: 48699/50720 (decimal rounded to 12 dp: 0.960153785489)
 
-SITE_B emergency restoration-ETA notification-group inter-arrivals:
+SITE_B / repository-owner resident archive (same building; shorter recent record):
   groups: 11
   first..last anchor: 2025-12-06 .. 2026-08-06
   elapsed days: 243
   inter-arrival intervals: 10
-  exact mean gap: 243/10 days = 24.3 days
-  exact median gap: 45/2 days = 22.5 days
-  exact standardized rate / 30 days: 100/81
-  standardized rate / mean Gregorian month: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+  exact mean gap: 243/10 = 24.3 days
+  exact mean-Gregorian-month normalized rate: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
 
-SITE_A emergency restoration-ETA notification-group inter-arrivals:
-  groups: 21
-  exact mean gap: 317/10 days
-  exact median gap: 23 days
+Building-level union of curated emergency groups (deduplicated across the two resident archives):
+  groups: 22
+  first..last anchor: 2024-11-10 .. 2026-08-06
+  elapsed days: 634
+  inter-arrival intervals: 21
+  exact mean gap: 634/21 (decimal rounded to 12 dp: 30.190476190476) days
+  exact mean-Gregorian-month normalized rate: 1022679/1014400 (decimal rounded to 12 dp: 1.008161474763)
+  CAUTION: this union changes ascertainment when the second resident archive begins, so it is secondary to the long single-source series.
 
 SITE_A equal-period count comparison (Jan 1-Aug 6):
   2025: 7
   2026: 9
   exact ratio: 9/7
-  exact relative change: 2/7
   exact relative change percent: 200/7% (decimal rounded to 12 dp: 28.571428571429%)
 
-Cross-site overlap:
+Cross-resident overlap at the same building:
+  SITE_A unique ETA dates: 10
+  SITE_B unique ETA dates: 11
+  shared ETA dates: 10
   exact Jaccard: 10/11 (decimal rounded to 12 dp: 0.909090909091)
+  Interpretation: corroboration between two resident SMS archives for the same building; not evidence about two separate service points or network topology.
 
 Planned announced windows:
   groups: 9
@@ -36,14 +49,26 @@ Planned announced windows:
   exact mean hours: 13/3
   exact median hours: 4
 
-WBES Tbilisi 2023 comparison:
+WBES Tbilisi 2023:
   published average outages in a typical month: 0.8
-  exact rational representation of that displayed decimal: 4/5
-  SITE_B inter-arrival rate normalized to exact mean Gregorian month: 5411/4320
-  exact ratio against displayed WBES value: 5411/3456 (decimal rounded to 12 dp: 1.565682870370)
-  exact relative excess against displayed WBES value: 48875/864% (decimal rounded to 12 dp: 56.568287037037%)
+  exact rational representation of displayed value: 4/5
+The rational form exactly represents the decimal string published by WBES; it is not the hidden unrounded weighted survey estimate.
 
-The fraction above is the exact rational representation of the decimal string published by the World Bank API. It is not the hidden unrounded survey estimate.
-This ratio is mathematically exact for the stated normalization and the displayed WBES value, but it is not a statistically rigorous Orkhevi-vs-Tbilisi outage-rate ratio because the source metrics, populations, years, completeness, and event identity differ.
+PRIMARY — long single-source SITE_A:
+  normalized monthly notification rate: 48699/50720 (decimal rounded to 12 dp: 0.960153785489)
+  ratio to displayed WBES 0.8: 48699/40576 (decimal rounded to 12 dp: 1.200192231861)
+  relative excess: 203075/10144% (decimal rounded to 12 dp: 20.019223186120%)
 
-Do not rewrite the SITE_B gap/rate metrics as a physical-outage rate or SAIFI.
+SECONDARY — building union:
+  normalized monthly notification rate: 1022679/1014400 (decimal rounded to 12 dp: 1.008161474763)
+  ratio to displayed WBES 0.8: 1022679/811520 (decimal rounded to 12 dp: 1.260201843454)
+  relative excess: 1055795/40576% (decimal rounded to 12 dp: 26.020184345426%)
+
+SECONDARY — shorter recent SITE_B:
+  normalized monthly notification rate: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+  ratio to displayed WBES 0.8: 5411/3456 (decimal rounded to 12 dp: 1.565682870370)
+  relative excess: 48875/864% (decimal rounded to 12 dp: 56.568287037037%)
+
+Primary benchmark comparison uses SITE_A because it is the longest single-resident series with a stable source. The building union is secondary because source ascertainment changes when SITE_B begins; SITE_B is a shorter recent series.
+These are notification/inter-arrival proxies, not a statistically rigorous building-vs-Tbilisi physical-outage reliability ratio.
+Do not rewrite these metrics as SAIFI or as proven physical-outage frequency.
