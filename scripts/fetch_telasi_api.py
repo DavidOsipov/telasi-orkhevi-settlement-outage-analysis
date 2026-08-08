@@ -25,7 +25,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--search-text", default=DEFAULT_SEARCH_TEXT)
     parser.add_argument("--list-mode", action="store_true", help="Use one paginated-list request instead of search mode")
-    parser.add_argument("--all-pages", action="store_true", help="Fetch every currently exposed paginated-list page")
+    parser.add_argument("--all-pages", action="store_true", help="Fetch two complete paginated-list passes and require a stable corpus")
     parser.add_argument("--page-number", type=int, default=1)
     parser.add_argument("--per-page", type=int, default=DEFAULT_PER_PAGE)
     parser.add_argument("--selected-lang", default="ka")
@@ -63,7 +63,7 @@ def main() -> int:
         write_normalized_outputs(document, output_dir, metadata)
         if not pagination_meta["complete_against_reported_total"]:
             raise SystemExit(
-                "Telasi API pagination ended before the reported total was reconstructed; "
+                "Telasi API corpus was not proven count-complete and stable across two full passes; "
                 f"see {output_dir/'fetch_metadata.json'}"
             )
         print(json.dumps(metadata, ensure_ascii=False, indent=2))

@@ -3,8 +3,8 @@
 
 Exact ETA matching is a corroboration test. A non-match is not evidence that the
 subscriber interruption did not occur. A global negative conclusion is only
-allowed when the API corpus metadata says every publication reported by the
-paginated endpoint was fetched.
+allowed when two full pagination passes agree and the loaded CSV is internally
+consistent with the API-reported total and fetch metadata.
 """
 
 from __future__ import annotations
@@ -50,12 +50,42 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def assess_corpus_completeness(api_records: list[dict], api_meta: dict) -> tuple[bool, list[str]]:
+    """Recompute whether a loaded corpus is safe for global negative claims.
+
+    Metadata is necessary but not sufficient: records.csv can be stale, truncated,
+    or paired with the wrong fetch_metadata.json. Fail closed on any mismatch.
+    """
+    reasons: list[str] = []
+    if api_meta.get("complete_against_reported_total") is not True:
+        reasons.append("metadata_not_complete")
+    if api_meta.get("stable_across_two_full_passes") is not True:
+        reasons.append("two_pass_stability_not_proven")
+
+    reported_total = api_meta.get("reported_total")
+    fetched_unique_count = api_meta.get("fetched_unique_count")
+    if not isinstance(reported_total, int) or reported_total < 0:
+        reasons.append("invalid_reported_total")
+    if not isinstance(fetched_unique_count, int) or fetched_unique_count < 0:
+        reasons.append("invalid_fetched_unique_count")
+    if isinstance(reported_total, int) and isinstance(fetched_unique_count, int) and fetched_unique_count != reported_total:
+        reasons.append("metadata_count_mismatch")
+    if isinstance(reported_total, int) and len(api_records) != reported_total:
+        reasons.append("records_csv_count_mismatch")
+
+    ids = [row.get("id", "") for row in api_records]
+    if api_records and (any(not value for value in ids) or len(set(ids)) != len(ids)):
+        reasons.append("records_csv_ids_missing_or_nonunique")
+
+    return not reasons, reasons
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api-dir", default="artifacts/telasi_api/all")
     parser.add_argument("--orkhevi-dir", default="artifacts/telasi_api/orkhevi")
-    parser.add_argument("--fetch", action="store_true", help="Fetch fresh complete paginated corpus plus Orkhevi search")
-    parser.add_argument("--require-complete", action="store_true", help="Fail unless corpus metadata proves reported total was fully fetched")
+    parser.add_argument("--fetch", action="store_true", help="Fetch a two-pass stable paginated corpus plus Orkhevi search")
+    parser.add_argument("--require-complete", action="store_true", help="Fail unless two-pass stability and CSV/metadata consistency are proven")
     parser.add_argument("--output", default="artifacts/telasi_api/comparison.json")
     args = parser.parse_args()
 
@@ -77,10 +107,13 @@ def main() -> int:
     orkhevi_records = load_csv(orkhevi_dir / "records.csv")
     sms = load_sms_etas()
 
-    complete = bool(api_meta.get("complete_against_reported_total"))
+    complete, completeness_failures = assess_corpus_completeness(api_records, api_meta)
     reported_total = api_meta.get("reported_total", api_meta.get("content_listCount"))
     if args.require_complete and not complete:
-        raise SystemExit("API corpus is not proven complete against content.listCount")
+        raise SystemExit(
+            "API corpus is not internally consistent and stable enough for corpus-wide negative claims: "
+            + ", ".join(completeness_failures)
+        )
 
     by_eta: dict[str, list[dict]] = defaultdict(list)
     for row in api_records:
@@ -106,8 +139,8 @@ def main() -> int:
 
     if complete:
         interpretation = (
-            "Exact ETA matching was run against a corpus reconstructed to the API-reported publication total. "
-            "A zero exact-match result means no matching public publication ETA was present in that captured corpus; "
+            "Exact ETA matching was run against two agreeing count-complete pagination passes. "
+            "A zero exact-match result means no matching public publication ETA was present in that stable reconstructed public corpus; "
             "it does not falsify resident SMS or prove the public site is a complete subscriber-level outage log."
         )
     else:
@@ -119,6 +152,8 @@ def main() -> int:
     result = {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "api_corpus_complete_against_reported_total": complete,
+        "api_corpus_stable_across_two_full_passes": api_meta.get("stable_across_two_full_passes") is True,
+        "api_completeness_failures": completeness_failures,
         "api_reported_total": reported_total,
         "api_publication_count_loaded": len(api_records),
         "orkhevi_search_publication_count": len(orkhevi_records),

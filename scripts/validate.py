@@ -70,11 +70,8 @@ require(not [r for r in notifications if r["message_kind"] == "unclassified"], "
 
 # Group IDs are date + category + sequence, so multiple same-day groups remain representable.
 group_ids = [g["group_id"] for g in groups]
-legacy_ids = [g["legacy_group_id"] for g in groups]
 require(len(group_ids) == len(set(group_ids)), "group_id values must be unique")
-require(len(legacy_ids) == len(set(legacy_ids)), "legacy_group_id values must be unique")
 require(all(re.fullmatch(r"G\d{8}-[ESP]\d{2}", gid) for gid in group_ids), "unexpected group_id format")
-require(all(re.fullmatch(r"G\d{8}", gid) for gid in legacy_ids), "unexpected legacy_group_id format")
 
 allowed_confidence = {"high", "medium", "low"}
 for g in groups:
@@ -87,6 +84,8 @@ for g in groups:
     stated_sites = set(g["evidence_sites"].split(";"))
     require(source_sites == stated_sites, f"{g['group_id']} evidence_sites mismatch: {source_sites} vs {stated_sites}")
     require(bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", g["anchor_date"])), f"bad anchor date in {g['group_id']}")
+    expected_legacy = "G" + g["anchor_date"].replace("-", "")
+    require(g["legacy_group_id"] == expected_legacy, f"bad legacy_group_id in {g['group_id']}: {g['legacy_group_id']}")
     try:
         datetime.strptime(g["anchor_date"], "%Y-%m-%d")
     except ValueError as exc:

@@ -77,14 +77,14 @@ Correctly reading `content.*` gives:
 |---|---:|---:|
 | exact frontend list payload, `perPage=12` | 889 | 12 |
 | taxonomy search for `ორხევ` | 17 | 17 |
-| contentType + taxonomy search for `ორხევ`, `perPage=100` | 17 | 17 |
+| contentType + taxonomy search for `ორხევ` | 17 | 17 |
 | general contentType list, `perPage=100` | 889 | 100 |
 
 The exploratory workflow originally printed zeros because it inspected `api.listCount/api.list`. That console summary was wrong; the artifact responses were inspected and the corrected observations plus response hashes are recorded in `MANIFEST.json`.
 
 More importantly, **889 was a reported total, not the number of records returned in one response**. The reviewed general-list artifact response is only page 1. The repository therefore makes no claim that a complete 889-publication snapshot was saved on 2026-08-08.
 
-The current fetcher has `--all-pages` mode and only marks a corpus complete when unique fetched publication count equals the API-reported total.
+The current fetcher has `--all-pages` mode and performs two full pagination passes. It marks a corpus complete only when both passes independently reach the reported total and agree on the reported total, publication identity set, and full publication-record contents.
 
 ## ETA extraction and source-data anomalies
 
@@ -109,7 +109,7 @@ Examples:
 
 This negative result applies only to the focused 17-publication fixture. It does **not** justify “no exact match exists anywhere in the public archive,” because a complete historical list snapshot was not preserved in the evidence package.
 
-`scripts/compare_telasi_api_sms.py` now requires complete-pagination metadata before a corpus-wide negative conclusion can be treated as such.
+`scripts/compare_telasi_api_sms.py` now requires a **two-pass stable, count-complete** fetch and independently checks that the loaded `records.csv` count/IDs agree with the fetch metadata before a corpus-wide negative conclusion can be treated as such.
 
 ## Planned-work cross-check example
 
@@ -127,7 +127,7 @@ python -m unittest discover -s tests -v
 python scripts/reconstruct_telasi_api_snapshot.py
 ```
 
-Live complete-list fetch:
+Live two-pass stable-list fetch:
 
 ```bash
 python scripts/fetch_telasi_api.py \
@@ -136,7 +136,7 @@ python scripts/fetch_telasi_api.py \
   --output-dir artifacts/telasi_api/all
 ```
 
-Live comparison requires completeness:
+Live comparison requires two-pass stability and internal count/ID consistency:
 
 ```bash
 python scripts/compare_telasi_api_sms.py \
@@ -145,4 +145,4 @@ python scripts/compare_telasi_api_sms.py \
   --require-complete
 ```
 
-The live workflow asserts semantic/completeness properties rather than hard-coding historical counts such as 17 or 889, because those public values can legitimately change over time.
+The live workflow asserts semantic/count-completeness and two-pass stability properties rather than hard-coding historical counts such as 17 or 889, because those public values can legitimately change over time. Two agreeing passes reduce live pagination movement risk but are not claimed to be an atomic internal Telasi snapshot.

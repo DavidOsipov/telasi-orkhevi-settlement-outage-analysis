@@ -18,6 +18,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 import telasi_api_core as core
 import telasi_api_pagination as pagination
+import compare_telasi_api_sms as compare
 
 
 def canonical_document():
@@ -86,41 +87,108 @@ class TelasiApiFixtureTests(unittest.TestCase):
         def page_doc(total, page, items):
             return {"api": {"listCount": 0, "list": []}, "content": {"listCount": total, "page": page, "list": items}}
 
-        responses = []
-        for doc in (
+        docs = [
             page_doc(3, 1, [{"id": 1}, {"id": 2}]),
             page_doc(3, 2, [{"id": 3}]),
-        ):
-            raw = json.dumps(doc).encode("utf-8")
-            responses.append((raw, 200, "application/json"))
+        ]
+        # Two identical complete passes are required for a stable corpus.
+        responses = [
+            (json.dumps(doc).encode("utf-8"), 200, "application/json")
+            for doc in docs + docs
+        ]
 
         with tempfile.TemporaryDirectory() as tmp, patch.object(pagination, "fetch_raw", side_effect=responses):
             aggregate, meta = pagination.fetch_all_list_pages(
                 output_dir=Path(tmp), per_page=1000, selected_lang="ka", timeout=1, max_pages=None
             )
+            self.assertTrue(meta["count_complete_against_reported_total"])
+            self.assertTrue(meta["stable_across_two_full_passes"])
             self.assertTrue(meta["complete_against_reported_total"])
             self.assertEqual(meta["reported_total"], 3)
-            self.assertEqual(meta["effective_first_page_size"], 2)
-            self.assertEqual(meta["raw_page_count"], 2)
+            self.assertEqual(len(meta["passes"]), 2)
+            self.assertTrue(all(p["effective_first_page_size"] == 2 for p in meta["passes"]))
+            self.assertTrue(all(p["raw_page_count"] == 2 for p in meta["passes"]))
             self.assertEqual([item["id"] for item in aggregate["content"]["list"]], [1, 2, 3])
 
     def test_all_pages_marks_changing_list_count_incomplete(self):
         def page_doc(total, page, items):
             return {"api": {"listCount": 0, "list": []}, "content": {"listCount": total, "page": page, "list": items}}
 
-        docs = [
+        pass_docs = [
             page_doc(3, 1, [{"id": 1}, {"id": 2}]),
             page_doc(4, 2, [{"id": 3}]),
         ]
-        responses = [(json.dumps(doc).encode("utf-8"), 200, "application/json") for doc in docs]
+        responses = [
+            (json.dumps(doc).encode("utf-8"), 200, "application/json")
+            for doc in pass_docs + pass_docs
+        ]
         with tempfile.TemporaryDirectory() as tmp, patch.object(pagination, "fetch_raw", side_effect=responses):
-            aggregate, meta = pagination.fetch_all_list_pages(
+            _, meta = pagination.fetch_all_list_pages(
                 output_dir=Path(tmp), per_page=2, selected_lang="ka", timeout=1, max_pages=2
             )
+            self.assertFalse(meta["count_complete_against_reported_total"])
             self.assertFalse(meta["complete_against_reported_total"])
-            self.assertFalse(meta["list_count_stable_across_pages"])
-            self.assertEqual(meta["reported_totals_seen"], [3, 4])
-            self.assertEqual(len(aggregate["content"]["list"]), 3)
+            self.assertTrue(all(not p["list_count_stable_across_pages"] for p in meta["passes"]))
+            self.assertEqual(meta["passes"][0]["reported_totals_seen"], [3, 4])
+
+    def test_one_pass_rejects_conflicting_duplicate_id_contents(self):
+        def page_doc(total, page, items):
+            return {"api": {"listCount": 0, "list": []}, "content": {"listCount": total, "page": page, "list": items}}
+
+        docs = [
+            page_doc(2, 1, [{"id": 1, "title": "A"}]),
+            page_doc(2, 2, [{"id": 1, "title": "B"}, {"id": 2, "title": "C"}]),
+        ]
+        responses = [(json.dumps(doc).encode("utf-8"), 200, "application/json") for doc in docs]
+        with tempfile.TemporaryDirectory() as tmp, patch.object(pagination, "fetch_raw", side_effect=responses):
+            _, meta = pagination._fetch_list_pass(
+                output_dir=Path(tmp), per_page=1, selected_lang="ka", timeout=1, max_pages=2
+            )
+            self.assertFalse(meta["count_complete_against_reported_total"])
+            self.assertEqual(meta["conflicting_duplicate_keys"], ["id:1"])
+
+    def test_two_pass_check_detects_same_count_but_moving_corpus(self):
+        def page_doc(total, page, items):
+            return {"api": {"listCount": 0, "list": []}, "content": {"listCount": total, "page": page, "list": items}}
+
+        docs = [
+            page_doc(3, 1, [{"id": 1}, {"id": 2}]),
+            page_doc(3, 2, [{"id": 3}]),
+            page_doc(3, 1, [{"id": 1}, {"id": 2}]),
+            page_doc(3, 2, [{"id": 4}]),
+        ]
+        responses = [(json.dumps(doc).encode("utf-8"), 200, "application/json") for doc in docs]
+        with tempfile.TemporaryDirectory() as tmp, patch.object(pagination, "fetch_raw", side_effect=responses):
+            _, meta = pagination.fetch_all_list_pages(
+                output_dir=Path(tmp), per_page=2, selected_lang="ka", timeout=1, max_pages=None
+            )
+            self.assertTrue(meta["count_complete_against_reported_total"])
+            self.assertFalse(meta["stable_identity_set_across_passes"])
+            self.assertFalse(meta["stable_across_two_full_passes"])
+            self.assertFalse(meta["complete_against_reported_total"])
+
+    def test_compare_recomputes_completeness_from_csv_and_metadata(self):
+        records = [{"id": "1"}]
+        dishonest = {
+            "complete_against_reported_total": True,
+            "stable_across_two_full_passes": True,
+            "reported_total": 999,
+            "fetched_unique_count": 999,
+        }
+        complete, failures = compare.assess_corpus_completeness(records, dishonest)
+        self.assertFalse(complete)
+        self.assertIn("records_csv_count_mismatch", failures)
+
+        honest_records = [{"id": "1"}, {"id": "2"}]
+        honest = {
+            "complete_against_reported_total": True,
+            "stable_across_two_full_passes": True,
+            "reported_total": 2,
+            "fetched_unique_count": 2,
+        }
+        complete, failures = compare.assess_corpus_completeness(honest_records, honest)
+        self.assertTrue(complete)
+        self.assertEqual(failures, [])
 
 
 if __name__ == "__main__":

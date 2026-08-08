@@ -22,7 +22,7 @@ This file records material corrections made during adversarial review and the la
 13. **`getMtData` role corrected.** It provides page/Nuxt metadata, not the outage publication body.
 14. **Unicode/cURL failure documented.** Georgian `searchText` was observed being mangled during Copy-as-cURL → Postman import; the client sends UTF-8 JSON directly.
 15. **False complete-corpus assumption removed.** An exploratory response reported `content.listCount=889` but returned only 100 page-1 records. No preserved 889-publication snapshot is claimed.
-16. **Real pagination implemented.** `--all-pages` follows pages, detects effective server page size, preserves raw pages and fails if unique fetched count does not equal the API-reported total.
+16. **Real pagination implemented.** `--all-pages` follows pages, detects effective server page size and preserves raw pages; the later second hardening pass strengthened this further to two-pass stability verification (see item 33).
 17. **Corpus-wide negative ETA claims gated on completeness.** Exact positive matches are valid on partial data; “no match in the corpus” requires complete-fetch metadata.
 18. **Canonical API snapshot cryptographically validated.** The in-repo Orkhevi response has byte counts/SHA-256/Git-blob hashes and is reconstructed offline; exploratory probe observations retain artifact provenance plus response size/SHA-256 without duplicating bulky payloads.
 19. **Exploratory probe-summary bug documented.** The old probe printed zeros because it inspected `api.*`; raw `content.*` responses are authoritative for that capture.
@@ -36,3 +36,12 @@ This file records material corrections made during adversarial review and the la
 27. **API regression coverage added.** Offline fixture tests cover taxonomy/geographic classification, spaced-digit ETA parsing, source-side year errors, focused-snapshot matching and mocked pagination under a server-side page cap.
 28. **Transient live API outputs ignored.** `artifacts/` is Git-ignored to avoid accidentally committing unreviewed live responses.
 29. **Exploratory API provenance retained without repository bloat.** Page-1/list/search probes are referenced by Actions run/artifact ID and response SHA-256/count metadata; browser netlogs and bulky duplicate probe payloads remain intentionally unpublished.
+
+## Second hardening re-audit
+
+30. **Legacy ID uniqueness contradiction removed.** `legacy_group_id` is now validated as the date-derived old identifier but is intentionally allowed to repeat when multiple groups share a date.
+31. **Cross-site overlap labeling corrected.** Jaccard is explicitly a comparison of unique ETA-date sets; current 10/11 values are no longer labeled as future-proof group counts.
+32. **Comparison completeness is recomputed.** `compare_telasi_api_sms.py` no longer trusts a metadata boolean alone; it verifies reported/fetched/CSV counts and unique publication IDs.
+33. **Live pagination strengthened against page movement.** `--all-pages` now requires two independently count-complete passes to agree on total, publication identities, and full record contents before global negative conclusions are allowed.
+34. **Narrative-summary regression coverage added.** Tests pin the current Russian summary headline statistics to the computed analysis values.
+35. **Conflicting duplicate publication IDs rejected.** A pagination pass is no longer allowed to silently deduplicate the same publication ID when its contents differ across pages; such a pass fails completeness.

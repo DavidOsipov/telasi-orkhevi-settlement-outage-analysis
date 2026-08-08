@@ -17,7 +17,7 @@ jobs:
           python3 scripts/fetch_telasi_api.py
           --search-text "ორხევი"
           --output-dir artifacts/telasi_api/orkhevi
-      - name: Fetch every currently reported list page
+      - name: Fetch and verify two stable complete list passes
         run: >-
           python3 scripts/fetch_telasi_api.py
           --all-pages
@@ -39,6 +39,8 @@ jobs:
           all_meta = json.loads((root / "all" / "fetch_metadata.json").read_text(encoding="utf-8"))
           ork_meta = json.loads((root / "orkhevi" / "fetch_metadata.json").read_text(encoding="utf-8"))
           comp = json.loads((root / "comparison.json").read_text(encoding="utf-8"))
+          assert all_meta["count_complete_against_reported_total"] is True
+          assert all_meta["stable_across_two_full_passes"] is True
           assert all_meta["complete_against_reported_total"] is True
           assert all_meta["fetched_unique_count"] == all_meta["reported_total"] > 0
           assert ork_meta["normalized_row_count"] > 0

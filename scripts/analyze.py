@@ -102,19 +102,23 @@ def render() -> str:
     emit("  No p-value/CI is reported because notification completeness and event independence are not established.")
     emit("")
 
-    a = {r["anchor_date"]: r for r in emergency if site_in(r, "SITE_A")}
-    b = {r["anchor_date"]: r for r in emergency if site_in(r, "SITE_B")}
     overlap_start = date(2025, 12, 6)
     overlap_end = record_end
-    a_overlap = {d for d in a if overlap_start <= d <= overlap_end}
-    b_overlap = {d for d in b if overlap_start <= d <= overlap_end}
-    shared = a_overlap & b_overlap
-    union = a_overlap | b_overlap
+    a_overlap_dates = {
+        r["anchor_date"] for r in emergency
+        if site_in(r, "SITE_A") and overlap_start <= r["anchor_date"] <= overlap_end
+    }
+    b_overlap_dates = {
+        r["anchor_date"] for r in emergency
+        if site_in(r, "SITE_B") and overlap_start <= r["anchor_date"] <= overlap_end
+    }
+    shared = a_overlap_dates & b_overlap_dates
+    union = a_overlap_dates | b_overlap_dates
     emit(f"Cross-site emergency ETA-date overlap ({overlap_start}..{overlap_end}):")
-    emit(f"  SITE_A groups: {len(a_overlap)}")
-    emit(f"  SITE_B groups: {len(b_overlap)}")
-    emit(f"  shared dates: {len(shared)}")
-    emit(f"  Jaccard(date sets): {len(shared) / len(union):.3f}" if union else "  Jaccard: n/a")
+    emit(f"  SITE_A unique ETA dates: {len(a_overlap_dates)}")
+    emit(f"  SITE_B unique ETA dates: {len(b_overlap_dates)}")
+    emit(f"  shared ETA dates: {len(shared)}")
+    emit(f"  Jaccard(unique ETA-date sets): {len(shared) / len(union):.3f}" if union else "  Jaccard: n/a")
     emit("")
 
     explicit_planned = [r for r in planned if r["status"] in {"announced", "announced_with_possible_undated_update"}]

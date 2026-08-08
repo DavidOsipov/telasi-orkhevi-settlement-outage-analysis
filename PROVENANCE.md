@@ -62,11 +62,11 @@ A browser network trace/netlog was used during reverse-engineering but is not pu
 - normalize a captured response;
 - perform a live text search;
 - fetch a single list page; or
-- reconstruct all currently API-reported list pages with raw-page preservation and completeness checks.
+- reconstruct the currently API-reported list twice, preserving raw pages for both passes and requiring count/content stability before marking the corpus complete.
 
 Runtime live data are written under ignored `artifacts/` and are not automatically promoted to curated repository evidence.
 
-`scripts/compare_telasi_api_sms.py` performs exact restoration-ETA corroboration. It distinguishes complete and partial API corpora and refuses a corpus-wide negative conclusion when completeness is not established.
+`scripts/compare_telasi_api_sms.py` performs exact restoration-ETA corroboration. Corpus-wide negative conclusions require two agreeing count-complete pagination passes and an independent consistency check between `fetch_metadata.json` and the loaded `records.csv` count/IDs. This is a stability gate for the public publication layer, not an atomic internal Telasi incident snapshot.
 
 ## External context
 

@@ -57,7 +57,7 @@ Examples:
 - 2026-01-22: ETA 12:00 and 20:00 at both sites; update ordering is plausible but receipt timestamps are absent;
 - 2026-04-07: ETA 19:33 and 22:29 at both sites, plus an exact duplicate 22:29 SMS at SITE_A.
 
-Group IDs use `GYYYYMMDD-XNN`, where `X` is `E` (emergency), `S` (network switching) or `P` (planned). This prevents the data model from reintroducing the false assumption “one calendar date = one group.” The old date-only ID is preserved as `legacy_group_id` for traceability.
+Group IDs use `GYYYYMMDD-XNN`, where `X` is `E` (emergency), `S` (network switching) or `P` (planned). This prevents the data model from reintroducing the false assumption “one calendar date = one group.” The old date-only value is preserved as `legacy_group_id` for traceability; because it is date-only, it is **not required to be unique** if multiple groups share a date.
 
 Different groups are not automatically distinct physical incidents.
 
@@ -143,14 +143,17 @@ For unplanned publications, `scripts/fetch_telasi_api.py` extracts the explicitl
 
 The current `--all-pages` implementation therefore:
 
-- preserves each raw page;
-- follows page numbers until all API-reported records are reconstructed;
+- performs **two independent full pagination passes**;
+- preserves every raw page separately for each pass;
+- follows page numbers until each pass reaches the API-reported total or fails closed;
 - detects server-side `perPage` caps from actual returned page size;
-- deduplicates by publication ID for pagination stability;
-- records stop reason and raw-page hashes;
-- fails closed if fetched unique count does not equal the reported total.
+- deduplicates by publication ID within each pass;
+- records stop reasons and raw-page hashes;
+- requires stable `listCount` within each pass;
+- requires both passes to be count-complete;
+- requires the two passes to agree on reported total, publication identity set, and full publication-record contents.
 
-A corpus-wide negative statement such as “no exact API ETA match exists” is allowed only when comparison metadata proves a complete paginated fetch against the API-reported total. Positive exact matches remain useful even with a partial corpus.
+This is a conservative **two-pass stability check**, not proof of an atomic Telasi database snapshot. A corpus-wide negative statement such as “no exact API ETA match exists” is allowed only when those stability/completeness checks pass **and** the comparison script independently verifies that `records.csv`, its IDs, and fetch metadata are mutually consistent. Positive exact matches remain useful even with partial data.
 
 ## 11. Raw API provenance
 
@@ -177,6 +180,6 @@ Those require authoritative interruption start/restoration timestamps and a defi
 
 - CSV generation uses explicit LF line endings for byte-stable cross-platform output.
 - `validate.py` rebuilds resident derived data and verifies group/source consistency, ETA sets, planned-window arithmetic, privacy rules and API snapshot hashes.
-- Unit tests cover current statistical invariants, same-day multi-group window counting, API fixture parsing, source-side anomaly preservation and mocked pagination under a server-side page-size cap.
+- Unit tests cover current statistical invariants, same-day multi-group window counting, date-set overlap labeling, API fixture parsing, source-side anomaly preservation, two-pass pagination under a server-side page-size cap, same-count corpus movement, and stale metadata/CSV mismatch rejection.
 - `scripts/analyze.py --output reports/analysis-output.txt` regenerates the committed analysis report.
 - GitHub Actions fails if regenerated derived/report files differ from the committed versions.

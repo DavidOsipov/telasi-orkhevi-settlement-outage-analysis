@@ -36,6 +36,19 @@ class AnalysisTests(unittest.TestCase):
         self.assertIn("3-day window: max 3 groups, 2026-08-04..2026-08-06", text)
         self.assertIn("24-day window: max 4 groups, 2026-07-14..2026-08-06", text)
 
+    def test_cross_site_overlap_is_explicitly_date_set_based(self):
+        text = analysis.render()
+        self.assertIn("SITE_A unique ETA dates: 10", text)
+        self.assertIn("SITE_B unique ETA dates: 11", text)
+        self.assertIn("shared ETA dates: 10", text)
+        self.assertIn("Jaccard(unique ETA-date sets): 0.909", text)
+        self.assertNotIn("SITE_A groups: 10", text)
+
+    def test_russian_summary_headlines_match_current_analysis(self):
+        summary = (ROOT / "reports" / "statistical-summary-ru.md").read_text(encoding="utf-8")
+        for fragment in ("31,70 дня", "24,30 дня", "+28,6%", "39,0 часа", "90,9%"):
+            self.assertIn(fragment, summary)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -98,17 +98,17 @@ python scripts/fetch_telasi_api.py \
   --output-dir artifacts/telasi_api/all
 ```
 
-`--all-pages`:
+`--all-pages` now performs **two full pagination passes**:
 
-- preserves every raw page under `raw_pages/`;
-- detects the effective first-page size rather than trusting requested `perPage`;
-- follows page numbers;
-- deduplicates by publication ID for pagination stability;
-- records raw-page SHA-256 values;
-- records a stop reason;
-- fails unless unique fetched count equals the API-reported total.
+- preserves every raw page under `raw_pages_pass_1/` and `raw_pages_pass_2/`;
+- detects effective first-page size rather than trusting requested `perPage`;
+- follows page numbers and deduplicates by publication ID within each pass;
+- records raw-page SHA-256 values and stop reasons;
+- requires stable `listCount` and exact count-completeness within each pass;
+- compares the two passes' reported totals, identity sets, and full record-content SHA-256 fingerprints;
+- fails unless both passes are count-complete **and** mutually stable.
 
-A transient live corpus is written under ignored `artifacts/` and is not automatically promoted to curated source evidence.
+This reduces offset/page movement risk on the live API, but it still does not create an atomic internal Telasi database snapshot. A transient live corpus is written under ignored `artifacts/` and is not automatically promoted to curated source evidence.
 
 ## 4. `getMtData`
 
@@ -228,7 +228,7 @@ Exact restoration-ETA matching is implemented by `scripts/compare_telasi_api_sms
 
 For the focused 17-hit Orkhevi fixture, there is no exact ETA match with resident emergency SMS. This conclusion applies only to those 17 publications.
 
-For a corpus-wide comparison, first fetch all pages and require completeness:
+For a corpus-wide comparison, first fetch two agreeing full passes and require consistency/stability:
 
 ```bash
 python scripts/compare_telasi_api_sms.py \
@@ -238,7 +238,7 @@ python scripts/compare_telasi_api_sms.py \
   --output artifacts/telasi_api/comparison.json
 ```
 
-A positive exact match is useful corroboration even in partial data. A zero-match corpus-wide statement is not allowed unless `complete_against_reported_total` is true.
+A positive exact match is useful corroboration even in partial data. A zero-match corpus-wide statement is not allowed unless `complete_against_reported_total` is true **after two-pass stability checking**, and `compare_telasi_api_sms.py` independently confirms that `records.csv` count/IDs agree with `reported_total` and `fetched_unique_count`.
 
 ## 11. Offline regression coverage
 
@@ -252,6 +252,8 @@ A positive exact match is useful corroboration even in partial data. A zero-matc
 - preservation of the 2025-year source anomaly in a 2026 publication;
 - no exact ETA match within the focused 17-hit fixture;
 - explicit proof that the 889-count exploratory response is partial;
-- mocked pagination when the server caps requested `perPage`.
+- mocked pagination when the server caps requested `perPage`;
+- rejection when two count-complete passes contain different records;
+- rejection of stale/tampered completeness metadata when `records.csv` does not match it.
 
 The live workflow tests current API semantics without hard-coding historical values such as 17 or 889.

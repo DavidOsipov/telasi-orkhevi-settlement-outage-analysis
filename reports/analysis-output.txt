@@ -17,10 +17,10 @@ Same-source descriptive comparison (SITE_A only; Jan 1-Aug 6):
   No p-value/CI is reported because notification completeness and event independence are not established.
 
 Cross-site emergency ETA-date overlap (2025-12-06..2026-08-06):
-  SITE_A groups: 10
-  SITE_B groups: 11
-  shared dates: 10
-  Jaccard(date sets): 0.909
+  SITE_A unique ETA dates: 10
+  SITE_B unique ETA dates: 11
+  shared ETA dates: 10
+  Jaccard(unique ETA-date sets): 0.909
 
 Explicit scheduled windows in planned notices without a cancellation signal in the same group: 9 groups, 39.0 announced hours
   announced-window mean=4.33 h; median=4.00 h

@@ -28,7 +28,12 @@ class PipelineTests(unittest.TestCase):
         ids = [r["group_id"] for r in self.groups]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertTrue(all(re.fullmatch(r"G\d{8}-[ESP]\d{2}", x) for x in ids))
-        self.assertTrue(all(re.fullmatch(r"G\d{8}", r["legacy_group_id"]) for r in self.groups))
+        for row in self.groups:
+            self.assertEqual(row["legacy_group_id"], "G" + row["anchor_date"].replace("-", ""))
+        # legacy_group_id is date-only traceability metadata and therefore is
+        # intentionally allowed to repeat when multiple groups share a date.
+        validator_source = (ROOT / "scripts" / "validate.py").read_text(encoding="utf-8")
+        self.assertNotIn("legacy_group_id values must be unique", validator_source)
 
     def test_emergency_group_count(self):
         self.assertEqual(sum(r["category"] == "emergency" for r in self.groups), 22)

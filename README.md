@@ -51,10 +51,10 @@ This is a same-source change in the supplied notification record. Because SITE_A
 
 During the overlapping emergency period from **2025-12-06 through 2026-08-06**:
 
-- SITE_A: 10 emergency ETA-date groups;
-- SITE_B: 11;
-- shared dates: 10;
-- Jaccard similarity: **10/11 = 0.909**.
+- SITE_A: **10 unique emergency ETA dates**;
+- SITE_B: **11 unique emergency ETA dates**;
+- shared ETA dates: **10**;
+- Jaccard similarity of the unique ETA-date sets: **10/11 = 0.909**.
 
 All ten shared curated groups have matching ETA-time sets between the two sites. This strongly supports repeated shared affected scope, but does not prove a specific feeder, transformer, substation, or topology.
 
@@ -73,7 +73,7 @@ The canonical Orkhevi text-search response captured on **2026-08-08** contains *
 
 A text hit for `ორხევი` can refer to the settlement, industrial zone, named roads/exits, or other Orkhevi-associated wording. Therefore 17 search hits are **not 17 outages of SITE_B and not 17 settlement-wide outages**.
 
-Exploratory general-list responses on the same date reported `content.listCount = 889`, but the reviewed exploratory probe artifact contains only **page 1** (12 or 100 records depending on payload). The repository therefore **does not claim that a complete 889-publication historical snapshot was preserved**. The current client has an explicit `--all-pages` mode that paginates until the API-reported total is reconstructed or fails closed.
+Exploratory general-list responses on the same date reported `content.listCount = 889`, but the reviewed exploratory probe artifact contains only **page 1** (12 or 100 records depending on payload). The repository therefore **does not claim that a complete 889-publication historical snapshot was preserved**. The current client has an explicit `--all-pages` mode that performs **two full pagination passes** and succeeds only when both passes are count-complete and agree on the reported total, publication identities, and publication contents. This reduces live-list movement risk but is still not an atomic internal Telasi database snapshot.
 
 The API contains source-side anomalies, including publication timestamps later than stated ETAs and at least one January 2026 publication whose body contains an ETA year of 2025. Parsers preserve those values literally rather than silently correcting Telasi's source data.
 
@@ -91,7 +91,7 @@ See [`data/telasi_api/README.md`](data/telasi_api/README.md) and [`reports/telas
 - `scripts/analyze.py` — conservative descriptive analysis.
 - `scripts/validate.py` — SMS/group/API provenance, schema, privacy, arithmetic and hash validation.
 - `scripts/fetch_telasi_api.py` — UTF-8-safe Telasi API fetcher/normalizer with real pagination.
-- `scripts/compare_telasi_api_sms.py` — exact ETA corroboration helper; corpus-wide negative conclusions require a complete paginated fetch.
+- `scripts/compare_telasi_api_sms.py` — exact ETA corroboration helper; corpus-wide negative conclusions require internally consistent records plus two agreeing count-complete pagination passes.
 - `scripts/reconstruct_telasi_api_snapshot.py` — cross-platform reconstruction and verification of the canonical raw API snapshot.
 - `tests/` — offline regression tests for SMS analysis, window logic and API fixtures/pagination.
 - `.github/workflows/quality.yml` — offline reproducibility checks.
@@ -121,7 +121,7 @@ python scripts/fetch_telasi_api.py \
   --output-dir artifacts/telasi_api/orkhevi
 ```
 
-Fetch every currently reported list page:
+Fetch and verify two complete/stable list passes:
 
 ```bash
 python scripts/fetch_telasi_api.py \
