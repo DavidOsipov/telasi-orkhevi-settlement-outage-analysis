@@ -15,7 +15,7 @@ Canonical place identifier:
 
 The exact building address, apartment numbers and subscriber/account numbers are intentionally not public.
 
-The neighbor receives Telasi messages for more than one property generally, but the user clarified on 2026-08-08 that the pseudonymized `SITE_A` transcript used in this repository is for the **same Orkhevi building** as `SITE_B`.
+The neighbor receives Telasi messages for more than one property generally, but the pseudonymized `SITE_A` transcript used in this repository concerns the **same Orkhevi building** as `SITE_B`.
 
 ## What the resident evidence supports
 
@@ -27,13 +27,25 @@ A defensible formulation is:
 
 The overlap is **cross-resident corroboration of one location**, not evidence of correlation between two different service points and not evidence of a particular feeder, transformer, substation or topology.
 
-## Time scope
+The longest constant resident series, SITE_A, has 21 emergency ETA-date groups forming 20 consecutive inter-arrival intervals over exactly 634 elapsed days; the exact mean notification-group gap is `317/10 = 31.7` days. This is a descriptive property of the supplied anchors, not a proven physical-outage recurrence rate.
+
+## Time and ascertainment scope
 
 The combined resident source-record anchor span is **2024-11-10 through 2026-08-06**.
 
-`SITE_A` is the longer single-resident series. `SITE_B` begins later. This means a simple union of the two archives changes ascertainment over time: before SITE_B begins there is one resident source, while later there are two. The union is useful for preserving all known building-level notification groups, but it should not be treated as a constant-observation-rate series.
+SITE_A is the longer single-resident series. SITE_B begins later. This means a simple union of the two archives changes ascertainment over time: before SITE_B begins there is one resident source, while later there are two. The union is useful for preserving all known building-level notification groups, but it should not be treated as a constant-observation-rate series.
 
 The span consists of supplied scheduled dates/restoration-ETA dates, not a proven complete continuous observation window.
+
+## Independent benchmark scope
+
+The WBES benchmark is **Tbilisi-wide business-establishment survey context for 2023**, not household/service-point monitoring and not an Orkhevi-building sample.
+
+The captured published/display values include `31.8%` of firms experiencing electrical outages and `0.8` average outages in a **typical month**. Those values provide independent Tbilisi context but are not definition-identical to resident restoration-ETA notification inter-arrival metrics.
+
+WBES “typical month” is not treated as an arithmetic mean calendar month. The repository therefore does not convert `0.8` into “one outage every N days” and does not claim a direct `X×` or `Y%` Orkhevi-building-vs-Tbilisi physical-outage reliability difference.
+
+Any arithmetic quotient retained in machine-readable exact-analysis output is diagnostic/reproducibility metadata only.
 
 ## Telasi API geographic scope
 
