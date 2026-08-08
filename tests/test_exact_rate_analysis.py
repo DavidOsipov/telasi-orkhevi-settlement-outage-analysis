@@ -52,7 +52,6 @@ class ExactRateAnalysisTests(unittest.TestCase):
             as_fraction(u["standardized_interarrival_groups_per_mean_gregorian_month"]),
             Fraction(1022679, 1014400),
         )
-        self.assertIn("ascertainment changes", self.analysis["comparison_policy"])
 
     def test_recent_source_b_is_still_exact(self):
         b = self.analysis["source_b_emergency_interarrival"]
@@ -63,36 +62,40 @@ class ExactRateAnalysisTests(unittest.TestCase):
             Fraction(5411, 4320),
         )
 
-    def test_wbes_display_value_precision(self):
+    def test_wbes_display_value_precision_and_semantics(self):
         wbes = self.analysis["wbes_tbilisi_2023"]
         self.assertEqual(wbes["published_average_outages_typical_month_text"], "0.8")
         self.assertEqual(as_fraction(wbes["published_average_outages_typical_month_fraction_from_display"]), Fraction(4, 5))
         self.assertIn("not the hidden unrounded weighted survey estimate", wbes["precision_warning"])
+        self.assertIn("not an arithmetic mean Gregorian calendar month", wbes["typical_month_semantics_warning"])
 
-    def test_primary_benchmark_uses_long_source_a(self):
-        c = self.analysis["benchmark_comparisons"]["primary_long_single_source_a"]
-        self.assertEqual(as_fraction(c["ratio_over_wbes_display"]), Fraction(48699, 40576))
-        self.assertEqual(as_fraction(c["relative_excess_percent_over_wbes_display"]), Fraction(203075, 10144))
-
-    def test_secondary_benchmark_values_are_explicit(self):
-        u = self.analysis["benchmark_comparisons"]["secondary_building_union"]
-        b = self.analysis["benchmark_comparisons"]["secondary_recent_source_b"]
+    def test_diagnostic_benchmark_arithmetic_is_preserved_but_not_a_rate_ratio(self):
+        comparisons = self.analysis["benchmark_comparisons"]
+        self.assertEqual(comparisons["status"], "diagnostic_only_do_not_report_as_reliability_ratio")
+        a = comparisons["primary_long_single_source_a"]
+        u = comparisons["secondary_building_union"]
+        b = comparisons["secondary_recent_source_b"]
+        self.assertEqual(a["status"], "diagnostic_arithmetic_only_not_a_rate_ratio")
+        self.assertEqual(as_fraction(a["ratio_over_wbes_display"]), Fraction(48699, 40576))
+        self.assertEqual(as_fraction(a["relative_excess_percent_over_wbes_display"]), Fraction(203075, 10144))
         self.assertEqual(as_fraction(u["ratio_over_wbes_display"]), Fraction(1022679, 811520))
         self.assertEqual(as_fraction(b["ratio_over_wbes_display"]), Fraction(5411, 3456))
 
     def test_existing_descriptive_ratios_are_exact(self):
         ytd = self.analysis["source_a_equal_period_comparison"]
         self.assertEqual(as_fraction(ytd["count_ratio_2026_over_2025"]), Fraction(9, 7))
+        self.assertEqual(as_fraction(ytd["relative_change"]), Fraction(2, 7))
         self.assertEqual(as_fraction(ytd["relative_change_percent"]), Fraction(200, 7))
         overlap = self.analysis["cross_resident_overlap"]
         self.assertEqual(as_fraction(overlap["jaccard"]), Fraction(10, 11))
 
-    def test_human_report_does_not_use_approximation_symbol(self):
+    def test_human_report_omits_direct_wbes_ratio(self):
         text = MODULE.render_text(self.analysis)
         self.assertNotIn("≈", text)
-        self.assertIn("PRIMARY — long single-source SITE_A", text)
         self.assertIn("same building", text)
-        self.assertIn("Do not rewrite", text)
+        self.assertIn("No direct resident-series/WBES outage-rate ratio is reported", text)
+        self.assertIn("Diagnostic arithmetic quotients remain in JSON only", text)
+        self.assertNotIn("ratio to displayed WBES 0.8", text)
 
 if __name__ == "__main__":
     unittest.main()
