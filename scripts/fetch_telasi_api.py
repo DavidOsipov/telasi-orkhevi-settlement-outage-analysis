@@ -2,11 +2,11 @@
 """Fetch Telasi's public power-outage publication API.
 
 The endpoint returns power-outage *publications*, not an authoritative utility
-incident log.  The actual records are in the top-level ``content`` object; the
+incident log. The actual records are in the top-level ``content`` object; the
 parallel ``api`` object is empty for the payload used by the public website.
 
 For unplanned publications, an estimated restoration timestamp is extracted
-from the Georgian text in ``editor`` when present.  It remains an ETA, not an
+from the Georgian text in ``editor`` when present. It remains an ETA, not an
 actual restoration timestamp or outage duration.
 """
 
@@ -48,28 +48,34 @@ def html_to_text(value: object) -> str:
     return " ".join(text.split())
 
 
-def _normalize_numeric_spacing(value: str) -> str:
-    # Telasi publications occasionally contain formatting spaces inside dates
-    # and times, e.g. "1 1 .07.2026 04 : 31" or "0 9 :31".
-    value = re.sub(r"(?<=\d)\s+(?=\d)", "", value)
-    value = re.sub(r"\s*([.:])\s*", r"\1", value)
-    return value
+def _digits(value: str) -> int:
+    return int(re.sub(r"\s+", "", value))
 
 
 def extract_restoration_eta(text: str) -> str:
-    """Return YYYY-MM-DD HH:MM for an explicitly stated restoration ETA."""
+    """Return YYYY-MM-DD HH:MM for an explicitly stated restoration ETA.
+
+    Telasi HTML sometimes splits individual date/time digits across span tags,
+    leaving spaces such as ``1 1 .07.2026 04 : 31`` or ``0 9 :31`` after HTML
+    stripping. The regex therefore tolerates spaces *within* numeric fields
+    without deleting the meaningful separator between the date and time.
+    """
     marker = "აღდგენის სავარაუდო დრო"
     pos = text.find(marker)
     if pos < 0:
         return ""
-    tail = _normalize_numeric_spacing(text[pos : pos + 260])
+    tail = text[pos : pos + 300]
     match = re.search(
-        r"(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})",
+        r"(\d(?:\s*\d)?)\s*\.\s*"
+        r"(\d(?:\s*\d)?)\s*\.\s*"
+        r"(\d\s*\d\s*\d\s*\d)\s+"
+        r"(\d(?:\s*\d)?)\s*:\s*"
+        r"(\d\s*\d)",
         tail,
     )
     if not match:
         return ""
-    day, month, year, hour, minute = map(int, match.groups())
+    day, month, year, hour, minute = (_digits(value) for value in match.groups())
     try:
         parsed = datetime(year, month, day, hour, minute)
     except ValueError:
@@ -97,7 +103,7 @@ def taxonomy_ids(item: dict) -> list[int]:
 
 
 def publication_class(item: dict) -> str:
-    """Classify using observed Telasi taxonomy IDs, retaining uncertainty."""
+    """Classify using taxonomy IDs observed in Telasi's public publications."""
     ids = set(taxonomy_ids(item))
     if ids == {2769}:
         return "planned_or_scheduled"
@@ -116,7 +122,7 @@ def make_payload(
         "searchText": search_text,
         "pageNumber": page_number,
         "perPage": per_page,
-        # The public frontend payload spells this field ``selectedlan``.
+        # This spelling is taken verbatim from the public frontend payload.
         "selectedlan": selected_lang,
         "taxonomy": {"content_poweroutage": list(DEFAULT_TAXONOMY)},
     }
@@ -155,8 +161,6 @@ def normalize_rows(document: dict) -> list[dict]:
             continue
         editor_html = item.get("editor") if isinstance(item.get("editor"), str) else ""
         editor_text = html_to_text(editor_html)
-        teaser_text = html_to_text(item.get("teaser"))
-        title_text = html_to_text(item.get("title"))
         rows.append(
             {
                 "id": item.get("id"),
@@ -168,8 +172,8 @@ def normalize_rows(document: dict) -> list[dict]:
                 "taxonomy_ids": ";".join(map(str, taxonomy_ids(item))),
                 "publication_class": publication_class(item),
                 "slug": item.get("slug"),
-                "title": title_text,
-                "teaser_text": teaser_text,
+                "title": html_to_text(item.get("title")),
+                "teaser_text": html_to_text(item.get("teaser")),
                 "editor_text": editor_text,
                 "restoration_eta": extract_restoration_eta(editor_text),
                 "announced_windows": extract_announced_windows(editor_text),
