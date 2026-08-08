@@ -13,66 +13,58 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Extract Enterprise Surveys data API and Georgia metadata
+      - name: Capture Enterprise Surveys API calls from Georgia page
         shell: bash
         run: |
           set -euo pipefail
+          echo '=== browser binaries ==='
+          which google-chrome || true
+          which chromium || true
+          which chromedriver || true
+          python3 -m pip install --quiet selenium
           python3 - <<'PY'
-          import json, re, requests, pathlib
+          import json, time, re, pathlib
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
 
-          s=requests.Session(); s.headers['User-Agent']='Mozilla/5.0'
-          jsurl='https://www.enterprisesurveys.org/etc.clientlibs/datasites-spa/clientlibs/clientlib-enterprisesurveys-data.js'
-          js=s.get(jsurl,timeout=60).text
-          out=[f'JS {jsurl} bytes={len(js.encode())}']
-
-          # Extract all literal ES API URLs and API path-looking strings.
-          urls=sorted(set(re.findall(r'https://extdataportal\.worldbank\.org/api/esapi[^"\'`\\\s]*',js)))
-          out.append('=== LITERAL ESAPI URLS ===')
-          out.extend(urls)
-
-          # Print context around API-function names and important domain terms.
-          terms=['GetAllEconomiesSubGroups','GetAllTopics','GetAllSubTopics','GetTopic','Indicator','SubNational','Subnational','subNational','subnational','Location','location','TopicIndicator','EconomyIndicator']
-          out.append('=== CONTEXT ===')
-          seen=set()
-          for term in terms:
-              for m in list(re.finditer(term,js,re.I))[:80]:
-                  a=max(0,m.start()-500); b=min(len(js),m.end()+900)
-                  sn=js[a:b].replace('\n',' ')
-                  key=sn[:200]
-                  if key in seen: continue
-                  seen.add(key); out.append(f'[{term}] {sn}')
-
-          # Official metadata endpoint: inspect Georgia and subgroups.
-          meta_urls=[
-            'https://extdataportal.worldbank.org/api/esapi/GetAllEconomiesSubGroups?lang=en',
-            'https://extdataportal.worldbank.org/api/esapi/sn/GetAllEconomiesSubGroups?lang=en',
-            'https://extdataportal.worldbank.org/api/esapi/GetAllTopics',
-            'https://extdataportal.worldbank.org/api/esapi/sn/GetAllTopics?lang=en',
+          opts=Options()
+          opts.add_argument('--headless=new')
+          opts.add_argument('--no-sandbox')
+          opts.add_argument('--disable-dev-shm-usage')
+          opts.add_argument('--window-size=1600,1200')
+          opts.set_capability('goog:loggingPrefs', {'performance':'ALL','browser':'ALL'})
+          driver=webdriver.Chrome(options=opts)
+          urls=[
+            'https://www.enterprisesurveys.org/en/data/exploreeconomies/2023/georgia',
+            'https://www.enterprisesurveys.org/en/data/exploreeconomies/2023/georgia#infrastructure-and-climate',
           ]
-          out.append('=== METADATA RESPONSES ===')
-          for u in meta_urls:
-              r=s.get(u,timeout=30)
-              out.append(f'GET {u} status={r.status_code} type={r.headers.get("content-type")} bytes={len(r.content)}')
-              try:
-                  data=r.json()
-              except Exception:
-                  out.append(r.text[:2000]); continue
-              # Keep only entries that help identify Georgia/Tbilisi/electricity endpoints.
-              if isinstance(data,list):
-                  relevant=[]
-                  for x in data:
-                      txt=json.dumps(x,ensure_ascii=False).lower()
-                      if any(k in txt for k in ['georgia','tbilisi','infrastructure','electric']): relevant.append(x)
-                  out.append('RELEVANT '+json.dumps(relevant,ensure_ascii=False)[:30000])
-                  out.append('FIRST '+json.dumps(data[:3],ensure_ascii=False)[:10000])
-              else:
-                  out.append(json.dumps(data,ensure_ascii=False)[:30000])
-
-          pathlib.Path('worldbank-api-probe.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
-          print('\n'.join(out[-500:]))
+          allreq=[]
+          try:
+            for page in urls:
+              print('NAV',page)
+              driver.get(page)
+              time.sleep(10)
+              print('TITLE',driver.title)
+              for entry in driver.get_log('performance'):
+                try: msg=json.loads(entry['message'])['message']
+                except Exception: continue
+                if msg.get('method')!='Network.requestWillBeSent': continue
+                req=msg.get('params',{}).get('request',{})
+                u=req.get('url','')
+                if 'extdataportal.worldbank.org' in u or '/api/esapi/' in u:
+                  rec={'method':req.get('method'),'url':u,'postData':req.get('postData')}
+                  if rec not in allreq: allreq.append(rec)
+              # Also print browser console errors that could explain missing calls.
+              for e in driver.get_log('browser'):
+                if e.get('level') in ('SEVERE','WARNING'): print('BROWSER',e)
+          finally:
+            driver.quit()
+          print('=== ES API REQUESTS ===')
+          for r in allreq: print(json.dumps(r,ensure_ascii=False))
+          pathlib.Path('worldbank-network-requests.json').write_text(json.dumps(allreq,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           PY
       - uses: actions/upload-artifact@v7
         with:
           name: worldbank-tbilisi-probe
-          path: worldbank-api-probe.txt
+          path: worldbank-network-requests.json
           if-no-files-found: error
