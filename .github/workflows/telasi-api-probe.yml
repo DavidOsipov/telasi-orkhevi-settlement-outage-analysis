@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Probe browser-equivalent Telasi requests
+      - name: Probe Telasi with browser-equivalent origin and language
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -26,67 +26,39 @@ jobs:
 
           out = Path("artifacts/telasi_api")
           out.mkdir(parents=True, exist_ok=True)
+          url = "https://app.telasi.ge/api/view/telasi/getPoweroutages"
 
-          def post(url, payload, *, app_api=False):
+          def post(name, payload):
               body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-              headers = {
-                  "Accept": "application/json, text/plain, */*" if app_api else "application/json",
+              req = Request(url, data=body, method="POST", headers={
+                  "Accept": "application/json, text/plain, */*",
                   "Content-Type": "application/json",
+                  "lang": "ka",
+                  "Origin": "https://www.telasi.ge",
+                  "Referer": "https://www.telasi.ge/",
                   "Cache-Control": "no-cache",
                   "Pragma": "no-cache",
-                  "User-Agent": "Mozilla/5.0",
-                  "Referer": "https://www.telasi.ge/",
-              }
-              if app_api:
-                  headers["lang"] = "ka"
-              req = Request(url, data=body, method="POST", headers=headers)
-              with urlopen(req, timeout=30) as response:
-                  raw = response.read()
-                  return response.status, json.loads(raw.decode("utf-8")), raw
-
-          list_url = "https://app.telasi.ge/api/view/telasi/getPoweroutages"
-          payloads = {
-              "search_stem": {"contentType":"poweroutage","searchText":"ორხევ"},
-              "search_name": {"contentType":"poweroutage","searchText":"ორხევი"},
-              "search_genitive": {"contentType":"poweroutage","searchText":"ორხევის"},
-              "user_exact": {"searchText":"","pageNumber":1,"perPage":12,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}},
-              "taxonomy_search": {"searchText":"ორხევ","pageNumber":1,"perPage":100,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}},
-          }
-
-          summary = {}
-          for name, payload in payloads.items():
-              status, data, raw = post(list_url, payload, app_api=True)
-              (out / f"list-{name}.json").write_bytes(raw)
-              api = data.get("api", {}) if isinstance(data, dict) else {}
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+                  "Accept-Language": "en-US,en;q=0.9",
+              })
+              with urlopen(req, timeout=30) as r:
+                  raw = r.read()
+                  data = json.loads(raw.decode("utf-8"))
+              (out/f"{name}.json").write_bytes(raw)
+              api = data.get("api", {})
               items = api.get("list", []) if isinstance(api, dict) else []
-              summary[name] = {
-                  "status": status,
-                  "listCount": api.get("listCount"),
-                  "items": len(items) if isinstance(items, list) else None,
-              }
-              print("PROBE", name, json.dumps(summary[name], ensure_ascii=False))
-              if isinstance(items, list):
-                  for i, item in enumerate(items[:20], 1):
-                      if isinstance(item, dict):
-                          print("ITEM", name, i, json.dumps(item, ensure_ascii=False)[:8000])
+              print(name, "status", r.status, "listCount", api.get("listCount"), "items", len(items) if isinstance(items,list) else None)
+              if isinstance(items,list):
+                  for item in items[:20]:
+                      print(json.dumps(item, ensure_ascii=False)[:10000])
 
-          dstatus, ddata, draw = post(
-              "https://www.telasi.ge/api/getMtData",
-              {"url":"/company-news/power-outage?content=5584","lang":"ka"},
-          )
-          (out / "detail-content-5584.json").write_bytes(draw)
-          summary["getMtData_5584"] = {
-              "status": dstatus,
-              "top_keys": list(ddata.keys()) if isinstance(ddata,dict) else None,
-              "response_bytes": len(draw),
-          }
-          (out / "probe-summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
-          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          post("search-orkhev", {"contentType":"poweroutage","searchText":"ორხევ"})
+          post("list-page1", {"searchText":"","pageNumber":1,"perPage":12,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}})
           PY
 
       - name: Upload probe artifact
         uses: actions/upload-artifact@v4
         with:
-          name: telasi-api-browser-equivalent
+          name: telasi-api-origin-probe
           path: artifacts/telasi_api/
           if-no-files-found: error
