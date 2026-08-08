@@ -19,7 +19,7 @@ jobs:
           python3 - <<'PY'
           import json, urllib.request, time
           from collections import Counter
-          from datetime import datetime
+          from datetime import date, datetime
           from pathlib import Path
 
           ENDPOINT='https://app.telasi.ge/api/view/telasi/getPoweroutages'
@@ -48,26 +48,18 @@ jobs:
             with urllib.request.urlopen(req,timeout=30) as r:
               data=r.read()
             doc=json.loads(data.decode('utf-8'))
-            c=doc.get('content') or {}
-            return c
+            return doc.get('content') or {}
 
           def tax_ids(item):
-            t=item.get('taxonomy') or []
-            out=[]
-            if isinstance(t,list):
-              for x in t:
-                if isinstance(x,int): out.append(x)
-                elif isinstance(x,dict):
-                  for k in ('id','term_id','taxonomy_id'):
-                    if isinstance(x.get(k),int): out.append(x[k]); break
-            return out
+            t=item.get('taxonomy') or {}
+            if not isinstance(t,dict): return []
+            vals=t.get('content_poweroutage') or []
+            return [x for x in vals if isinstance(x,int)] if isinstance(vals,list) else []
 
+          rows_by_label={}
           results={}
           for label,term in TERMS.items():
-            unique={}
-            page=1
-            reported=None
-            totals=[]
+            unique={}; page=1; reported=None; totals=[]
             while True:
               payload={
                 'contentType':'poweroutage',
@@ -91,46 +83,55 @@ jobs:
               page+=1
               if page>50: break
               time.sleep(0.15)
-
-            rows=list(unique.values())
-            years=Counter()
-            unplanned_years=Counter()
-            dates=[]
-            planned=unplanned=other=0
+            rows=list(unique.values()); rows_by_label[label]=rows
+            dates=[]; years=Counter(); unplanned_years=Counter(); planned=unplanned=other=0
             for x in rows:
               ids=set(tax_ids(x))
-              if 2770 in ids: cls='unplanned'; unplanned+=1
-              elif 2769 in ids: cls='planned'; planned+=1
+              if ids=={2770}: cls='unplanned'; unplanned+=1
+              elif ids=={2769}: cls='planned'; planned+=1
               else: cls='other'; other+=1
               rawdate=x.get('date') or x.get('created_at') or ''
-              year=None
-              if isinstance(rawdate,str) and len(rawdate)>=4 and rawdate[:4].isdigit():
-                year=int(rawdate[:4]); years[year]+=1
-                if cls=='unplanned': unplanned_years[year]+=1
-                dates.append(rawdate[:10])
+              if isinstance(rawdate,str) and len(rawdate)>=10 and rawdate[:4].isdigit():
+                d=rawdate[:10]; dates.append(d); y=int(d[:4]); years[y]+=1
+                if cls=='unplanned': unplanned_years[y]+=1
             results[label]={
-              'query':term,
-              'reported_total':reported,
-              'returned_unique':len(rows),
+              'query':term,'reported_total':reported,'returned_unique':len(rows),
               'complete_against_reported_total': reported is not None and len(rows)==reported and len(set(totals))<=1,
-              'pages_fetched':page,
-              'planned':planned,
-              'unplanned':unplanned,
-              'other':other,
-              'first_publication_date':min(dates) if dates else None,
-              'last_publication_date':max(dates) if dates else None,
-              'publications_by_year':dict(sorted(years.items())),
-              'unplanned_by_year':dict(sorted(unplanned_years.items())),
+              'pages_fetched':page,'planned':planned,'unplanned':unplanned,'other':other,
+              'first_publication_date':min(dates) if dates else None,'last_publication_date':max(dates) if dates else None,
+              'publications_by_year':dict(sorted(years.items())),'unplanned_by_year':dict(sorted(unplanned_years.items())),
             }
-            print(label, json.dumps(results[label],ensure_ascii=False,sort_keys=True))
+
+          # Compare all areas inside the exact publication-date span of the Orkhevi search set.
+          common_start=date.fromisoformat(results['Orkhevi']['first_publication_date'])
+          common_end=date.fromisoformat(results['Orkhevi']['last_publication_date'])
+          span_days=(common_end-common_start).days+1
+          for label,rows in rows_by_label.items():
+            unplanned_dates=[]; planned_dates=[]
+            for x in rows:
+              rawdate=x.get('date') or x.get('created_at') or ''
+              if not (isinstance(rawdate,str) and len(rawdate)>=10): continue
+              try: d=date.fromisoformat(rawdate[:10])
+              except ValueError: continue
+              if not (common_start<=d<=common_end): continue
+              ids=set(tax_ids(x))
+              if ids=={2770}: unplanned_dates.append(d)
+              elif ids=={2769}: planned_dates.append(d)
+            u=sorted(set(unplanned_dates)); p=sorted(set(planned_dates))
+            results[label]['common_window_start']=str(common_start)
+            results[label]['common_window_end']=str(common_end)
+            results[label]['common_window_days']=span_days
+            results[label]['unplanned_publications_in_common_window']=len(unplanned_dates)
+            results[label]['unplanned_publication_days_in_common_window']=len(u)
+            results[label]['planned_publication_days_in_common_window']=len(p)
+            results[label]['calendar_days_per_unplanned_publication_day']=round(span_days/len(u),2) if u else None
 
           out={'captured_at':datetime.now().astimezone().isoformat(timespec='seconds'),'results':results}
           Path('district-comparison.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print('\n=== COMPACT TABLE ===')
+          print(f"COMMON WINDOW {common_start}..{common_end} = {span_days} days")
+          print('=== COMPACT TABLE ===')
           for label,r in results.items():
-            y2025=r['unplanned_by_year'].get(2025,0)
-            y2026=r['unplanned_by_year'].get(2026,0)
-            print(f"{label:14} total={r['reported_total']!s:>4} returned={r['returned_unique']:>4} complete={str(r['complete_against_reported_total']):5} unplanned={r['unplanned']:>4} 2025={y2025:>3} 2026={y2026:>3} span={r['first_publication_date']}..{r['last_publication_date']}")
+            print(f"{label:14} hits={r['reported_total']:>3} unplanned={r['unplanned']:>3} planned={r['planned']:>3} | common unplanned pubs={r['unplanned_publications_in_common_window']:>3} days={r['unplanned_publication_days_in_common_window']:>3} => one publication-day/{r['calendar_days_per_unplanned_publication_day']} calendar days")
           PY
       - uses: actions/upload-artifact@v7
         with:
