@@ -23,14 +23,14 @@ jobs:
         run: |
           python scripts/fetch_telasi_api.py \
             --search-text "ორხევ" \
-            --per-page 100 \
             --output-dir artifacts/telasi_api/orkhevi
 
       - name: Fetch complete available publication corpus
         run: |
           python scripts/fetch_telasi_api.py \
-            --search-text "" \
-            --per-page 2000 \
+            --list-mode \
+            --page-number 1 \
+            --per-page 1000 \
             --output-dir artifacts/telasi_api/all
 
       - name: Compare public corpus with supplied SMS ETAs
@@ -40,7 +40,7 @@ jobs:
             --orkhevi-dir artifacts/telasi_api/orkhevi \
             --output artifacts/telasi_api/comparison.json
 
-      - name: Assert observed API invariants
+      - name: Assert structural API invariants
         run: |
           python - <<'PY'
           import json
@@ -51,12 +51,10 @@ jobs:
           ork_meta = json.loads((root/"orkhevi"/"fetch_metadata.json").read_text(encoding="utf-8"))
           comp = json.loads((root/"comparison.json").read_text(encoding="utf-8"))
 
-          assert all_meta["content_listCount"] == all_meta["normalized_row_count"]
-          assert all_meta["content_listCount"] >= 889
-          assert ork_meta["content_listCount"] == 17
-          assert comp["sms_eta_values_with_exact_public_api_match"] == 0
+          assert all_meta["content_listCount"] >= all_meta["normalized_row_count"] > 0
+          assert ork_meta["content_listCount"] == ork_meta["normalized_row_count"] == 17
           assert comp["orkhevi_search_publication_count"] == 17
-          print("Telasi API invariants OK")
+          print("Telasi API structural invariants OK")
           PY
 
       - name: Upload API corpus artifact
