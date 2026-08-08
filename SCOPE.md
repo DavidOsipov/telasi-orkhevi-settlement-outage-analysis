@@ -2,50 +2,46 @@
 
 ## Geographic scope
 
-The repository is centered on **Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
+The repository is centered on **one residential building in Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
 
 Canonical place identifier:
 
 - Wikidata: `Q130437988`
 
-`SITE_B` is the primary service point associated with the Orkhevi analysis.
+`SITE_A` and `SITE_B` are retained as stable legacy identifiers, but they are **not two geographic sites**.
 
-`SITE_A` is a neighbor-supplied corroborating longitudinal series. The resident explicitly warned that she receives Telasi SMS for more than one property in different places. The supplied transcript contains one pseudonymized subscriber number, and its exact property/location mapping is not published.
+- `SITE_A` = the neighbor's resident SMS archive for this building; supplied history begins in 2024.
+- `SITE_B` = the repository owner's resident SMS archive for the same building; supplied history begins in 2025.
 
-Therefore SITE_A's pre-overlap history and its 7→9 equal-period comparison must not be presented as Orkhevi-specific unless the private subscriber-to-property mapping is confirmed.
+The exact building address, apartment numbers and subscriber/account numbers are intentionally not public.
+
+The neighbor receives Telasi messages for more than one property generally, but the user clarified on 2026-08-08 that the pseudonymized `SITE_A` transcript used in this repository is for the **same Orkhevi building** as `SITE_B`.
 
 ## What the resident evidence supports
 
-The supplied records show repeated electricity-interruption notifications affecting the primary Orkhevi service point and a strongly correlated second service point during the overlap period.
-
-The overlap is consistent with both points repeatedly being included in the same affected network scope. The public evidence does not prove exact feeder/transformer/substation topology.
+The supplied records document repeated Telasi electricity-interruption notifications associated with one Orkhevi building, corroborated by two resident SMS archives during their overlapping period.
 
 A defensible formulation is:
 
-> The dataset documents repeated Telasi electricity-interruption notifications at an Orkhevi service point, corroborated across much of the overlapping period by a second strongly correlated service point.
+> The dataset documents repeated Telasi electricity-interruption notifications for one residential building in Orkhevi, with two resident archives independently preserving many of the same restoration-ETA notifications during the overlap period.
 
-## Telasi API geographic scope
-
-Searching Telasi's public API for the Georgian substring `ორხევი` is a **text query**, not a network-topology query.
-
-Returned publications can mention:
-
-- Orkhevi Settlement;
-- Orkhevi industrial zone;
-- Orkhevi-named exits/roads;
-- streets or locations described in broader Orkhevi context.
-
-Therefore the canonical 17-hit API snapshot is contextual/publication evidence and cannot be translated directly into 17 SITE_B outages or 17 settlement-wide outages.
+The overlap is **cross-resident corroboration of one location**, not evidence of correlation between two different service points and not evidence of a particular feeder, transformer, substation or topology.
 
 ## Time scope
 
 The combined resident source-record anchor span is **2024-11-10 through 2026-08-06**.
 
-This is a span of supplied scheduled dates/restoration-ETA dates, not a proven complete continuous observation window.
+`SITE_A` is the longer single-resident series. `SITE_B` begins later. This means a simple union of the two archives changes ascertainment over time: before SITE_B begins there is one resident source, while later there are two. The union is useful for preserving all known building-level notification groups, but it should not be treated as a constant-observation-rate series.
 
-The primary SITE_B supplied record begins later than SITE_A. That coverage difference must be respected in time comparisons.
+The span consists of supplied scheduled dates/restoration-ETA dates, not a proven complete continuous observation window.
 
-The Telasi API snapshots are point-in-time captures on **2026-08-08**. A reported API `listCount` describes the server response at capture time and does not, by itself, establish that every listed publication was preserved locally.
+## Telasi API geographic scope
+
+Searching Telasi's public API for the Georgian substring `ორხევი` is a **text query**, not a building-level or electrical-topology query.
+
+Returned publications can mention Orkhevi Settlement, the industrial zone, named roads/exits, or broader Orkhevi-associated locations. The canonical 17-hit API snapshot therefore cannot be translated directly into 17 outages of this building or 17 settlement-wide outages.
+
+The Telasi API snapshots are point-in-time captures on **2026-08-08**. A reported API `listCount` does not, by itself, establish that every listed publication was preserved locally.
 
 ## External grid context
 
