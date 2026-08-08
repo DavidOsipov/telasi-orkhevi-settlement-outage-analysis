@@ -54,18 +54,6 @@ The SMS messages usually provide an estimated restoration time, not a verified o
 
 Subscriber numbers and addresses are intentionally absent from the public data. A complainant can provide the relevant subscriber number privately to Telasi while citing this repository as longitudinal supporting evidence.
 
-## Publish to GitHub
-
-On Windows PowerShell, after extracting the archive and opening the repository directory:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\publish.ps1
-```
-
-This validates the public dataset, initializes Git, creates `DavidOsipov/telasi-orkhevi-settlement-outage-analysis` as a public GitHub repository with GitHub CLI, and pushes `main`.
-
-If the repository is created manually on GitHub first, the files can instead be pushed normally or updated through the connected GitHub integration.
-
 ## License
 
 The repository is released under the **MIT License**. See [`LICENSE`](LICENSE).
