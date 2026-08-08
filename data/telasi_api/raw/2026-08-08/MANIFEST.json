@@ -3,11 +3,13 @@
   "notes": [
     "Raw API material is preserved separately from resident SMS evidence.",
     "The getPoweroutages search response was obtained in Postman after manually re-entering the Georgian UTF-8 searchText because a copied cURL/import path had mangled the query.",
-    "The large getPoweroutages JSON is stored as deterministic gzip encoded as Base64 because the repository write path used for this snapshot was text-only. Decoding and gunzipping reproduces the original response bytes exactly."
+    "The large getPoweroutages JSON is stored as deterministic gzip, Base64-encoded and split into eight text chunks because the repository write path used for this snapshot was text-only.",
+    "The Git blob SHA-1 of every committed chunk was checked against the locally calculated Git blob SHA-1 for that exact source chunk before this manifest was finalized."
   ],
   "files": [
     {
-      "path": "getPoweroutages-search-orkhevi.response.json.gz.b64",
+      "logical_name": "getPoweroutages-search-orkhevi.response.json",
+      "stored_as": "getPoweroutages-search-orkhevi.response.json.gz.part-01.b64 through part-08.b64",
       "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
       "method": "POST",
       "payload": {"contentType": "poweroutage", "searchText": "ორხევი"},
@@ -25,6 +27,16 @@
       "gzip_sha256": "f30e8c6cb6d72866ac53767164965c27b29191107c739dad5b89e3b9a4797b92",
       "base64_text_bytes": 29520,
       "base64_text_sha256": "ca426bbbd50d9a4bacbc90252d00aa4aa5f445875f9ef8e290570609ddb51029",
+      "chunks": [
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-01.b64", "bytes": 4096, "sha256": "22e760c357bf1f35e58d15c6b5345049923a09e295f37f608e2d87f99ad6730c", "git_blob_sha1": "9af4035e68123eb5ba4c0e3aa749a275b81955cb"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-02.b64", "bytes": 4096, "sha256": "d6f4dd847ec3205527099defd250d0667e9c799cb2e26fef2bbfd1cd41d87bcf", "git_blob_sha1": "e73116e5112e65a8ac1759d5b5420ebe52372c00"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-03.b64", "bytes": 4096, "sha256": "6fdf6ed0e81a9e06fda9a0dbe94ee75b1150b5ff7b0a0b11e1acd3d3331d8909", "git_blob_sha1": "8f65474859aa052b5ba40eb0db79c54708d5c281"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-04.b64", "bytes": 4096, "sha256": "f011facb4199b8493a4894e478f94781600bd968a1840cc4012cf1c007406be7", "git_blob_sha1": "0e9aa2436c73183a3d50ca58aa8f7b613566e853"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-05.b64", "bytes": 4096, "sha256": "e10df17eb8a41c66f21f52648fe9c5590385c946ba163575f245ed27164e4058", "git_blob_sha1": "cb54276cd0b46fb12daf6e2ebdeffbd85a626856"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-06.b64", "bytes": 4096, "sha256": "38c117f41906a562cbf03d40174b11eba2c9fe3b07c3688e878f4dc36ead2bf3", "git_blob_sha1": "bb735b59c46d79c74d03dcb1c94359566c93aeac"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-07.b64", "bytes": 4096, "sha256": "13bc738d585049fbd95846705f9a3610d42c52ca32731ba4ae6d0dd876b2d522", "git_blob_sha1": "f265af304bf004c6b364202cc7901a05eefe17c1"},
+        {"path": "getPoweroutages-search-orkhevi.response.json.gz.part-08.b64", "bytes": 848, "sha256": "fde53430474fe9176ef53533b8bdbaba95f7d4248c6df29e986ee29aceb471d0", "git_blob_sha1": "cb412cd54cddd82506a936fabd585f5bde04450e"}
+      ],
       "capture_method": "Postman response supplied by repository owner"
     },
     {
