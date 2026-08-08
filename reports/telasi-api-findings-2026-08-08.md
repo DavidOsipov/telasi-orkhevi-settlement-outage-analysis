@@ -74,9 +74,9 @@ point” or even “17 settlement-wide outages.”
 Examples include:
 
 - ID 5584, published 2026-07-11, unplanned switching, ETA 04:31;
-- ID 4761, published 2026-02-02, unplanned авария, ETA 21:42;
+- ID 4761, published 2026-02-02, unplanned fault, ETA 21:42;
 - IDs 4539 and 4541, both published 2025-12-06, fire-related, ETA 09:25;
-- ID 4426, published 2025-11-05, авария, ETA 04:17;
+- ID 4426, published 2025-11-05, unplanned fault, ETA 04:17;
 - planned publication ID 4970 for 12 March 2026, whose body contains an
   11:00–18:00 restriction window in a section mentioning Orkhevi industrial
   zone.
