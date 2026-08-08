@@ -6,7 +6,7 @@ A reproducible, privacy-preserving record of electricity interruption SMS notice
 
 This repository concerns electricity interruptions affecting two correlated Telasi service points in **Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
 
-Canonical place identifier: **Wikidata Q130437988**.
+Canonical place identifier: **[Wikidata Q130437988](https://www.wikidata.org/entity/Q130437988)**.
 
 The repository does not claim that every interruption affected the whole settlement. The SMS evidence supports a shared upstream distribution fault domain for the two observed service points, while the exact feeder / transformer topology is not public in this dataset.
 
