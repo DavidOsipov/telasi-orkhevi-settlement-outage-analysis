@@ -1,0 +1,36 @@
+name: Telasi API probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/fetch_telasi_api.py"
+      - "data/telasi_api/**"
+      - ".github/workflows/telasi-api-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-orkhevi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Telasi Orkhevi API records
+        run: |
+          python scripts/fetch_telasi_api.py \
+            --search-text "ორხევ" \
+            --output-dir artifacts/telasi_api
+
+      - name: Show normalized records
+        run: |
+          cat artifacts/telasi_api/fetch_metadata.json
+          cat artifacts/telasi_api/records.csv
+
+      - name: Upload API response artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: telasi-orkhevi-api-response
+          path: artifacts/telasi_api/
+          if-no-files-found: error
