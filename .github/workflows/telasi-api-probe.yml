@@ -17,17 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch Telasi Orkhevi API records
-        run: |
-          python scripts/fetch_telasi_api.py \
-            --search-text "ორხევ" \
-            --output-dir artifacts/telasi_api
-
-      - name: Show normalized records
-        run: |
-          cat artifacts/telasi_api/fetch_metadata.json
-          cat artifacts/telasi_api/records.csv
-
       - name: Probe exact list and detail payloads
         run: |
           python - <<'PY'
@@ -58,14 +47,14 @@ jobs:
                   "selectedlan": "ka",
                   "taxonomy": {"content_poweroutage": [2769, 2770]},
               },
-              "taxonomy_plus_search": {
+              "taxonomy_search": {
                   "searchText": "ორხევ",
                   "pageNumber": 1,
                   "perPage": 100,
                   "selectedlan": "ka",
                   "taxonomy": {"content_poweroutage": [2769, 2770]},
               },
-              "taxonomy_plus_content_type": {
+              "contenttype_taxonomy_search": {
                   "contentType": "poweroutage",
                   "searchText": "ორხევ",
                   "pageNumber": 1,
@@ -73,80 +62,51 @@ jobs:
                   "selectedlan": "ka",
                   "taxonomy": {"content_poweroutage": [2769, 2770]},
               },
+              "contenttype_all": {
+                  "contentType": "poweroutage",
+                  "searchText": "",
+                  "pageNumber": 1,
+                  "perPage": 100,
+                  "selectedlan": "ka",
+                  "taxonomy": {"content_poweroutage": [2769, 2770]},
+              },
           }
+          summary = {}
           for name, payload in payloads.items():
               status, data, raw = post(list_url, payload)
               (out / f"list-{name}.json").write_bytes(raw)
               api = data.get("api", {}) if isinstance(data, dict) else {}
               items = api.get("list", []) if isinstance(api, dict) else []
-              print("LIST_PROBE", name, "status=", status, "listCount=", api.get("listCount"), "items=", len(items) if isinstance(items, list) else None)
+              summary[name] = {
+                  "status": status,
+                  "top_keys": list(data.keys()) if isinstance(data, dict) else None,
+                  "listCount": api.get("listCount"),
+                  "items": len(items) if isinstance(items, list) else None,
+              }
+              print("PROBE", name, json.dumps(summary[name], ensure_ascii=False))
               if isinstance(items, list):
-                  for i, item in enumerate(items[:10], 1):
+                  for i, item in enumerate(items[:20], 1):
                       if isinstance(item, dict):
-                          print("ITEM", name, i, json.dumps({k: item.get(k) for k in ["id","code","full_title","title","teaser","editor","outage_time","poweron_time","users_count","created_at","updated_at","slug","url"]}, ensure_ascii=False))
+                          print("ITEM", name, i, json.dumps(item, ensure_ascii=False)[:5000])
 
           detail_url = "https://www.telasi.ge/api/getMtData"
           detail_payload = {"url": "/company-news/power-outage?content=5584", "lang": "ka"}
           dstatus, ddata, draw = post(detail_url, detail_payload)
           (out / "detail-content-5584.json").write_bytes(draw)
-          print("DETAIL_STATUS", dstatus)
-          print("DETAIL_TOP_KEYS", list(ddata.keys()) if isinstance(ddata, dict) else type(ddata).__name__)
-          print("DETAIL_PREVIEW", json.dumps(ddata, ensure_ascii=False)[:12000])
+          summary["getMtData_5584"] = {
+              "status": dstatus,
+              "top_keys": list(ddata.keys()) if isinstance(ddata, dict) else None,
+              "response_chars": len(draw),
+          }
+          print("DETAIL", json.dumps(summary["getMtData_5584"], ensure_ascii=False))
+          print("DETAIL_BODY", json.dumps(ddata, ensure_ascii=False)[:15000])
+
+          (out / "probe-summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
 
-      - name: Crawl lazy-loaded frontend chunks for outage API code
-        run: |
-          python - <<'PY'
-          from collections import deque
-          from pathlib import Path
-          import re
-          from urllib.parse import urljoin, urlparse
-          from urllib.request import Request, urlopen
-
-          page_url = "https://www.telasi.ge/company-news/power-outage"
-          headers = {"User-Agent": "Mozilla/5.0"}
-          html = urlopen(Request(page_url, headers=headers), timeout=30).read().decode("utf-8", "replace")
-          seeds = [urljoin(page_url, src) for src in re.findall(r'<script[^>]+src=["\\\']([^"\\\']+)', html, re.I)]
-          queue = deque(seeds)
-          seen = set()
-          hits = []
-          fetched = 0
-          needles = [
-              "getPoweroutages", "content_poweroutage", "poweroutage_address",
-              "power-outage", "getMtData", "/api/view/telasi/", "outage_time", "poweron_time",
-          ]
-
-          while queue and fetched < 300:
-              url = queue.popleft()
-              if url in seen or urlparse(url).netloc != "www.telasi.ge":
-                  continue
-              seen.add(url)
-              try:
-                  raw = urlopen(Request(url, headers=headers), timeout=30).read()
-                  text = raw.decode("utf-8", "replace")
-              except Exception as exc:
-                  continue
-              fetched += 1
-              for needle in needles:
-                  for m in list(re.finditer(re.escape(needle), text, re.I))[:20]:
-                      pos = m.start()
-                      hits.append((url, needle, pos, text[max(0,pos-2500):min(len(text),pos+5500)]))
-              for rel in re.findall(r'["\\\'](\./[^"\\\']+\.js)["\\\']', text):
-                  child = urljoin(url, rel)
-                  if child not in seen:
-                      queue.append(child)
-
-          lines = [f"fetched_js={fetched}", f"unique_urls={len(seen)}", f"hits={len(hits)}"]
-          for url, needle, pos, context in hits:
-              lines.append(f"\n### {url}\n--- {needle!r} @ {pos} ---\n{context}\n")
-          out = Path("artifacts/telasi_api/frontend-outage-api.txt")
-          out.write_text("\n".join(lines), encoding="utf-8")
-          print("\n".join(lines[:250]))
-          PY
-
-      - name: Upload API response artifact
+      - name: Upload probe artifact
         uses: actions/upload-artifact@v4
         with:
-          name: telasi-orkhevi-api-response
+          name: telasi-api-focused-probe
           path: artifacts/telasi_api/
           if-no-files-found: error
