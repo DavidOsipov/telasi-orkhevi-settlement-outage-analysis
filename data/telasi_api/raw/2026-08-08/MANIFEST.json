@@ -1,0 +1,42 @@
+{
+  "snapshot_date": "2026-08-08",
+  "notes": [
+    "Raw API material is preserved separately from resident SMS evidence.",
+    "The getPoweroutages search response was obtained in Postman after manually re-entering the Georgian UTF-8 searchText because a copied cURL/import path had mangled the query.",
+    "The large getPoweroutages JSON is stored as deterministic gzip encoded as Base64 because the repository write path used for this snapshot was text-only. Decoding and gunzipping reproduces the original response bytes exactly."
+  ],
+  "files": [
+    {
+      "path": "getPoweroutages-search-orkhevi.response.json.gz.b64",
+      "endpoint": "https://app.telasi.ge/api/view/telasi/getPoweroutages",
+      "method": "POST",
+      "payload": {"contentType": "poweroutage", "searchText": "ორხევი"},
+      "observed_response": {
+        "content_listCount": 17,
+        "content_list_length": 17,
+        "api_listCount": 0,
+        "api_list_length": 0,
+        "taxonomy_2770_rows": 13,
+        "taxonomy_2769_rows": 4
+      },
+      "original_json_bytes": 295834,
+      "original_json_sha256": "99e9f1a1331b97300bc1984304c2d71db8acd46fbf543a8ff0e45d3eecf0cb89",
+      "gzip_bytes": 22140,
+      "gzip_sha256": "f30e8c6cb6d72866ac53767164965c27b29191107c739dad5b89e3b9a4797b92",
+      "base64_text_bytes": 29520,
+      "base64_text_sha256": "ca426bbbd50d9a4bacbc90252d00aa4aa5f445875f9ef8e290570609ddb51029",
+      "capture_method": "Postman response supplied by repository owner"
+    },
+    {
+      "path": "getMtData-content-5584.response.json",
+      "endpoint": "https://www.telasi.ge/api/getMtData",
+      "method": "POST",
+      "payload": {"url": "/company-news/power-outage?content=5584", "lang": "ka"},
+      "original_json_bytes": 2641,
+      "original_json_sha256": "9df4be2583528e9ce7639f55f2d065ddc301adfe49a63933c269805be02f4e54",
+      "capture_method": "GitHub Actions API probe",
+      "workflow_run_id": 31253449527,
+      "interpretation": "Nuxt/page metadata only; outage publication body is not returned by this endpoint in the captured response."
+    }
+  ]
+}
