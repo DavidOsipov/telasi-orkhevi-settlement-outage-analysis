@@ -12,8 +12,9 @@ SITE_B emergency restoration-ETA notification-group inter-arrivals:
   inter-arrival intervals: 10
   exact mean gap: 243/10 days = 24.3 days
   exact median gap: 45/2 days = 22.5 days
-  exact standardized rate / 30 days: 100/81
-  standardized rate / mean Gregorian month: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+  exact standardized inter-arrival count / 30 days: 100/81
+  standardized inter-arrival count / mean Gregorian calendar month: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+  These standardizations are derived from the 10 observed inter-arrival intervals, not from a proven complete observation window.
 
 SITE_A emergency restoration-ETA notification-group inter-arrivals:
   groups: 21
@@ -36,14 +37,15 @@ Planned announced windows:
   exact mean hours: 13/3
   exact median hours: 4
 
-WBES Tbilisi 2023 comparison:
-  published average outages in a typical month: 0.8
-  exact rational representation of that displayed decimal: 4/5
-  SITE_B inter-arrival rate normalized to exact mean Gregorian month: 5411/4320
-  exact ratio against displayed WBES value: 5411/3456 (decimal rounded to 12 dp: 1.565682870370)
-  exact relative excess against displayed WBES value: 48875/864% (decimal rounded to 12 dp: 56.568287037037%)
+WBES Tbilisi 2023 independent benchmark:
+  percent of firms experiencing electrical outages (published display value): 31.8%
+  average outages in a typical month (published display value): 0.8
+  exact rational representation of the displayed 0.8: 4/5
+  No direct SITE_B/WBES outage-rate ratio is reported.
+  WBES 'typical month' is not the arithmetic mean Gregorian month, so 0.8 cannot be exactly converted to 'one outage every N days'.
 
 The fraction above is the exact rational representation of the decimal string published by the World Bank API. It is not the hidden unrounded survey estimate.
-This ratio is mathematically exact for the stated normalization and the displayed WBES value, but it is not a statistically rigorous Orkhevi-vs-Tbilisi outage-rate ratio because the source metrics, populations, years, completeness, and event identity differ.
+WBES 'typical month' is a survey concept for the most common type of month regarding outages, not the arithmetic mean Gregorian calendar month. The published 0.8 therefore has no exact conversion to 'one outage every N days'.
+This arithmetic contrast is retained for reproducibility only. The SITE_B numerator is normalized to an arithmetic mean Gregorian calendar month, whereas the WBES denominator is a weighted survey indicator for a 'typical month'. Do not report this quotient as 'Orkhevi has X times/more outages than Tbilisi'. The source metrics, populations, years, completeness, event identity, and month definitions differ.
 
 Do not rewrite the SITE_B gap/rate metrics as a physical-outage rate or SAIFI.
