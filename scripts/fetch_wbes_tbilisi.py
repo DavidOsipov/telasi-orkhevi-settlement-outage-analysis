@@ -24,10 +24,10 @@ DEFAULT_OUTPUT_DIR = Path("artifacts/wbes/tbilisi-2023")
 
 WANTED_FIELDS = {
     "in16": "Percent of firms experiencing electrical outages",
-    "bready_in2": "Average number of electrical outages in a typical month",
-    "bready_in3_median": "Duration, in hours, of a typical electrical outage [median]",
+    "bready_in2": "[B-READY] Average number of electrical outages in a typical month",
+    "bready_in3_median": "[B-READY] Duration, in hours, of a typical electrical outage [median]",
     "in12": "Percent of firms identifying electricity as a major or very severe constraint",
-    "bready_in9": "Percent of firms owning or sharing a generator",
+    "bready_in9": "[B-READY] Percent of firms owning or sharing a generator",
 }
 
 
@@ -87,17 +87,22 @@ def normalize(raw: bytes, source_url: str, fetched_at: str) -> dict:
     indicators: dict[str, dict] = {}
     for field, expected_label in WANTED_FIELDS.items():
         row = by_field[field]
+        actual_label = row.get("indicator")
+        if actual_label != expected_label:
+            raise ValueError(
+                f"Tbilisi indicator label changed for {field}: expected {expected_label!r}, got {actual_label!r}"
+            )
         published = row.get("country")
-        if published is None:
-            raise ValueError(f"Tbilisi indicator {field} has null country value")
-        published_text = str(published)
+        if not isinstance(published, str):
+            raise ValueError(
+                f"Tbilisi indicator {field} country value is not a JSON string; refusing to claim lexical precision"
+            )
         indicators[field] = {
             "indicator_id": row.get("indicatorId"),
             "query_field_name": field,
-            "indicator": row.get("indicator"),
-            "expected_label_for_validation": expected_label,
-            "published_value": published_text,
-            **exact_fraction_from_display(published_text),
+            "indicator": actual_label,
+            "published_value": published,
+            **exact_fraction_from_display(published),
         }
 
     return {
