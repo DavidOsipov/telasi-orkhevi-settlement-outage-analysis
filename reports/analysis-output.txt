@@ -1,0 +1,22 @@
+Observation: 2024-11-10 to 2026-08-06 inclusive = 635 days
+Emergency interruption dates (conservative): 22
+Network-switching interruption dates: 1
+Non-cancelled planned interruption dates: 9
+Cancelled planned-work dates: 2
+All non-cancelled recorded/announced interruption dates: 32
+Emergency-date annualized rate: 12.65 per 365 days
+Emergency gaps: mean=30.19 d, median=21.0 d, min=1 d, max=100 d
+
+Non-cancelled announced planned windows: 41.0 h total; mean=4.56 h/event
+Cancelled announced windows: 15.0 h
+
+2025-01-01..08-06: 7 emergency dates / 218 days
+2026-01-01..08-06: 10 emergency dates / 218 days
+Rate ratio 2026/2025: 1.429; approximate 95% CI 0.544–3.753; exact two-sided p=0.629
+
+Max 3-day window: 3 emergency dates, 2026-08-04..2026-08-06: 2026-08-04, 2026-08-05, 2026-08-06
+Max 7-day window: 3 emergency dates, 2026-08-04..2026-08-10: 2026-08-04, 2026-08-05, 2026-08-06
+Max 14-day window: 3 emergency dates, 2026-01-12..2026-01-25: 2026-01-12, 2026-01-13, 2026-01-22
+Max 24-day window: 4 emergency dates, 2026-07-14..2026-08-06: 2026-07-14, 2026-08-04, 2026-08-05, 2026-08-06
+Max 30-day window: 4 emergency dates, 2026-07-14..2026-08-12: 2026-07-14, 2026-08-04, 2026-08-05, 2026-08-06
+Max 60-day window: 5 emergency dates, 2024-12-13..2025-02-10: 2024-12-13, 2024-12-31, 2025-01-17, 2025-01-19, 2025-02-07
