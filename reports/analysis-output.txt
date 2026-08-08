@@ -5,14 +5,15 @@ Network-switching notification groups keyed by restoration-ETA date: 1
 Planned-work notification groups keyed by scheduled date: 11
 
 Per-site emergency ETA-date gaps (descriptive notification gaps; not physical-outage inter-arrival times):
-  SITE_A: mean=31.70 d; median=23.0 d; min=1 d; max=100 d
-  SITE_B: mean=24.30 d; median=22.5 d; min=1 d; max=62 d
+  SITE_A: mean=317/10 = 31.7 d; median=23 d; min=1 d; max=100 d
+  SITE_B: mean=243/10 = 24.3 d; median=45/2 = 22.5 d; min=1 d; max=62 d
   Do not restate these values as 'an outage every N days': SMS completeness and incident identity are not established.
 
 Same-source descriptive comparison (SITE_A only; Jan 1-Aug 6):
   2025: 7 emergency ETA-date groups
   2026: 9 emergency ETA-date groups
-  descriptive ratio: 1.286 (+28.6%)
+  exact descriptive ratio: 9/7 (decimal rounded to 3 dp: 1.286)
+  exact relative change: 200/7 (decimal rounded to 6 dp: 28.571429)%
   SITE_A's exact public property/location mapping is intentionally unresolved; do not restate this as an Orkhevi-wide rate change.
   No p-value/CI is reported because notification completeness and event independence are not established.
 
@@ -20,10 +21,10 @@ Cross-site emergency ETA-date overlap (2025-12-06..2026-08-06):
   SITE_A unique ETA dates: 10
   SITE_B unique ETA dates: 11
   shared ETA dates: 10
-  Jaccard(unique ETA-date sets): 0.909
+  Jaccard(unique ETA-date sets): 10/11 (decimal rounded to 3 dp: 0.909)
 
-Explicit scheduled windows in planned notices without a cancellation signal in the same group: 9 groups, 39.0 announced hours
-  announced-window mean=4.33 h; median=4.00 h
+Explicit scheduled windows in planned notices without a cancellation signal in the same group: 9 groups, 39 announced hours
+  announced-window exact mean=13/3 (decimal rounded to 3 dp: 4.333) h; median=4 h
   These are notice-window hours, not verified outage-duration hours.
   The undated 2025-11 planned-work extension is not included beyond the explicit 11:00-14:00 window.
 
