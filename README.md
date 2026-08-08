@@ -11,7 +11,7 @@ For emergency SMS and many Telasi public notices, a stated date/time can be an *
 ## Geographic scope
 
 - Primary locality: **Orkhevi Settlement (ორხევის დასახლება), Tbilisi**
-- Wikidata: `Q130437988`
+- [Wikidata: Q130437988](https://www.wikidata.org/entity/Q130437988)
 - `SITE_B`: primary Orkhevi service point
 - `SITE_A`: strongly correlated neighbor-supplied longitudinal series; its exact public location is deliberately not asserted until the subscriber-to-property mapping is privately confirmed.
 
