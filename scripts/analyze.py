@@ -172,7 +172,8 @@ def render() -> str:
         ratio = Fraction(n26, n25)
         relative_change = ratio - 1
         emit(f"  exact descriptive ratio: {display_fraction(ratio)}")
-        emit(f"  exact relative change: {display_fraction(relative_change * 100, places=6)}%")
+        emit(f"  exact relative change: {display_fraction(relative_change, places=6)}")
+        emit(f"  exact relative change percent: {display_fraction(relative_change * 100, places=6)}%")
     emit("  SITE_A's exact public property/location mapping is intentionally unresolved; do not restate this as an Orkhevi-wide rate change.")
     emit("  No p-value/CI is reported because notification completeness and event independence are not established.")
     emit("")
