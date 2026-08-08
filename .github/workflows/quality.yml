@@ -20,7 +20,9 @@ jobs:
         run: python3 -O scripts/validate.py
       - name: Run regression tests
         run: python3 -m unittest discover -s tests -v
-      - name: Regenerate statistical output
+      - name: Regenerate conservative statistical output
         run: python3 scripts/analyze.py --output reports/analysis-output.txt
+      - name: Regenerate exact rational-rate output
+        run: python3 scripts/analyze_exact_rates.py --output-text reports/exact-rate-analysis.txt
       - name: Assert generated files are committed and byte-stable
-        run: git diff --exit-code -- data/derived/notifications.csv reports/analysis-output.txt
+        run: git diff --exit-code -- data/derived/notifications.csv reports/analysis-output.txt reports/exact-rate-analysis.txt
