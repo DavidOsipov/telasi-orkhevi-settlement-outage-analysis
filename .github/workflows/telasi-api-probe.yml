@@ -28,7 +28,7 @@ jobs:
           cat artifacts/telasi_api/fetch_metadata.json
           cat artifacts/telasi_api/records.csv
 
-      - name: Inspect Telasi frontend API references
+      - name: Inspect exact outage API code in Telasi frontend
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -37,36 +37,29 @@ jobs:
           from urllib.request import Request, urlopen
 
           page_url = "https://www.telasi.ge/company-news/power-outage"
-          req = Request(page_url, headers={"User-Agent": "Mozilla/5.0"})
-          html = urlopen(req, timeout=30).read().decode("utf-8", "replace")
-          script_urls = [urljoin(page_url, src) for src in re.findall(r'<script[^>]+src=["\\\']([^"\\\']+)', html, re.I)]
-          lines = [f"page={page_url}", f"scripts={len(script_urls)}"]
-          needles = ["getPoweroutages", "searchText", "/api/view/telasi/", "poweroutage"]
-          for url in script_urls:
-              try:
-                  text = urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=30).read().decode("utf-8", "replace")
-              except Exception as exc:
-                  lines.append(f"ERROR {url}: {exc}")
-                  continue
-              hits = []
+          html = urlopen(Request(page_url, headers={"User-Agent": "Mozilla/5.0"}), timeout=30).read().decode("utf-8", "replace")
+          scripts = [urljoin(page_url, src) for src in re.findall(r'<script[^>]+src=["\\\']([^"\\\']+)', html, re.I)]
+          needles = [
+              "getPoweroutages",
+              "telasi/getPoweroutages",
+              'contentType:"poweroutage"',
+              "contentType:'poweroutage'",
+              "poweroutage_address",
+          ]
+          lines = [f"page={page_url}", f"scripts={len(scripts)}"]
+          for url in scripts:
+              text = urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=30).read().decode("utf-8", "replace")
               for needle in needles:
-                  start = 0
-                  while True:
-                      pos = text.find(needle, start)
-                      if pos < 0:
-                          break
-                      lo = max(0, pos - 800)
-                      hi = min(len(text), pos + 1600)
-                      hits.append((needle, pos, text[lo:hi]))
-                      start = pos + len(needle)
-              if hits:
-                  lines.append(f"\n### {url}")
-                  for needle, pos, context in hits[:20]:
-                      lines.append(f"\n--- hit {needle!r} at {pos} ---\n{context}\n")
-          out = Path("artifacts/telasi_api/frontend-api-references.txt")
+                  positions = [m.start() for m in re.finditer(re.escape(needle), text)]
+                  lines.append(f"{url}\t{needle}\thits={len(positions)}")
+                  for pos in positions[:10]:
+                      lo = max(0, pos - 1800)
+                      hi = min(len(text), pos + 3500)
+                      lines.append(f"\n--- {needle!r} @ {pos} ---\n{text[lo:hi]}\n")
+          out = Path("artifacts/telasi_api/frontend-outage-api.txt")
           out.parent.mkdir(parents=True, exist_ok=True)
           out.write_text("\n".join(lines), encoding="utf-8")
-          print(out.read_text(encoding="utf-8")[:30000])
+          print(out.read_text(encoding="utf-8")[:50000])
           PY
 
       - name: Upload API response artifact
