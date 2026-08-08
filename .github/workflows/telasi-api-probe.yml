@@ -40,36 +40,10 @@ jobs:
 
           list_url = "https://app.telasi.ge/api/view/telasi/getPoweroutages"
           payloads = {
-              "user_exact": {
-                  "searchText": "",
-                  "pageNumber": 1,
-                  "perPage": 12,
-                  "selectedlan": "ka",
-                  "taxonomy": {"content_poweroutage": [2769, 2770]},
-              },
-              "taxonomy_search": {
-                  "searchText": "ორხევ",
-                  "pageNumber": 1,
-                  "perPage": 100,
-                  "selectedlan": "ka",
-                  "taxonomy": {"content_poweroutage": [2769, 2770]},
-              },
-              "contenttype_taxonomy_search": {
-                  "contentType": "poweroutage",
-                  "searchText": "ორხევ",
-                  "pageNumber": 1,
-                  "perPage": 100,
-                  "selectedlan": "ka",
-                  "taxonomy": {"content_poweroutage": [2769, 2770]},
-              },
-              "contenttype_all": {
-                  "contentType": "poweroutage",
-                  "searchText": "",
-                  "pageNumber": 1,
-                  "perPage": 100,
-                  "selectedlan": "ka",
-                  "taxonomy": {"content_poweroutage": [2769, 2770]},
-              },
+              "user_exact": {"searchText":"","pageNumber":1,"perPage":12,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}},
+              "taxonomy_search": {"searchText":"ორხევ","pageNumber":1,"perPage":100,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}},
+              "contenttype_taxonomy_search": {"contentType":"poweroutage","searchText":"ორხევ","pageNumber":1,"perPage":100,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}},
+              "contenttype_all": {"contentType":"poweroutage","searchText":"","pageNumber":1,"perPage":100,"selectedlan":"ka","taxonomy":{"content_poweroutage":[2769,2770]}},
           }
           summary = {}
           for name, payload in payloads.items():
@@ -77,36 +51,61 @@ jobs:
               (out / f"list-{name}.json").write_bytes(raw)
               api = data.get("api", {}) if isinstance(data, dict) else {}
               items = api.get("list", []) if isinstance(api, dict) else []
-              summary[name] = {
-                  "status": status,
-                  "top_keys": list(data.keys()) if isinstance(data, dict) else None,
-                  "listCount": api.get("listCount"),
-                  "items": len(items) if isinstance(items, list) else None,
-              }
+              summary[name] = {"status":status,"listCount":api.get("listCount"),"items":len(items) if isinstance(items,list) else None}
               print("PROBE", name, json.dumps(summary[name], ensure_ascii=False))
-              if isinstance(items, list):
-                  for i, item in enumerate(items[:20], 1):
-                      if isinstance(item, dict):
-                          print("ITEM", name, i, json.dumps(item, ensure_ascii=False)[:5000])
 
-          detail_url = "https://www.telasi.ge/api/getMtData"
-          detail_payload = {"url": "/company-news/power-outage?content=5584", "lang": "ka"}
-          dstatus, ddata, draw = post(detail_url, detail_payload)
+          dstatus, ddata, draw = post("https://www.telasi.ge/api/getMtData", {"url":"/company-news/power-outage?content=5584","lang":"ka"})
           (out / "detail-content-5584.json").write_bytes(draw)
-          summary["getMtData_5584"] = {
-              "status": dstatus,
-              "top_keys": list(ddata.keys()) if isinstance(ddata, dict) else None,
-              "response_chars": len(draw),
-          }
-          print("DETAIL", json.dumps(summary["getMtData_5584"], ensure_ascii=False))
-          print("DETAIL_BODY", json.dumps(ddata, ensure_ascii=False)[:15000])
+          summary["getMtData_5584"] = {"status":dstatus,"top_keys":list(ddata.keys()) if isinstance(ddata,dict) else None,"response_bytes":len(draw)}
+          (out / "probe-summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
 
-          (out / "probe-summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+      - name: Trace live page network requests in Chrome
+        run: |
+          set -euxo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          echo "chrome=$CHROME"
+          test -n "$CHROME"
+          mkdir -p artifacts/telasi_api
+          timeout 35s "$CHROME" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --log-net-log="$PWD/artifacts/telasi_api/chrome-netlog.json" \
+            --net-log-capture-mode=Everything \
+            --virtual-time-budget=12000 \
+            --dump-dom \
+            "https://www.telasi.ge/company-news/power-outage?content=5584" \
+            > artifacts/telasi_api/page-5584.html || true
+
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          p = Path("artifacts/telasi_api/chrome-netlog.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          strings = []
+          for event in data.get("events", []):
+              params = event.get("params", {})
+              text = json.dumps(params, ensure_ascii=False)
+              if any(x in text for x in ["telasi.ge/api", "app.telasi.ge/api", "getPoweroutages", "getMtData", "poweroutage", "5584"]):
+                  strings.append(json.dumps(event, ensure_ascii=False))
+          out = Path("artifacts/telasi_api/network-api-events.txt")
+          out.write_text("\n".join(strings), encoding="utf-8")
+          print("matching_netlog_events", len(strings))
+          for line in strings[:300]:
+              print(line[:10000])
+
+          dom = Path("artifacts/telasi_api/page-5584.html").read_text(encoding="utf-8", errors="replace")
+          print("DOM_LEN", len(dom))
+          for needle in ["5584", "outage", "ენერგომომარაგების", "ავარია", "გაცნობებთ"]:
+              print("DOM_NEEDLE", needle, dom.find(needle))
           PY
 
       - name: Upload probe artifact
         uses: actions/upload-artifact@v4
         with:
-          name: telasi-api-focused-probe
+          name: telasi-api-browser-trace
           path: artifacts/telasi_api/
           if-no-files-found: error
