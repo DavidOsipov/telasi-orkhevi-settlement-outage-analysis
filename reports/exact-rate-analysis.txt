@@ -11,7 +11,8 @@ SITE_A / neighbor resident archive (same building; longest single-source record)
   elapsed days: 634
   inter-arrival intervals: 20
   exact mean gap: 317/10 = 31.7 days
-  exact mean-Gregorian-month normalized rate: 48699/50720 (decimal rounded to 12 dp: 0.960153785489)
+  arithmetic mean-Gregorian-month inter-arrival normalization: 48699/50720 (decimal rounded to 12 dp: 0.960153785489)
+  CAUTION: event-bounded inter-arrival normalization, not a complete-observation incidence rate.
 
 SITE_B / repository-owner resident archive (same building; shorter recent record):
   groups: 11
@@ -19,7 +20,8 @@ SITE_B / repository-owner resident archive (same building; shorter recent record
   elapsed days: 243
   inter-arrival intervals: 10
   exact mean gap: 243/10 = 24.3 days
-  exact mean-Gregorian-month normalized rate: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+  arithmetic mean-Gregorian-month inter-arrival normalization: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+  CAUTION: event-bounded inter-arrival normalization, not a complete-observation incidence rate.
 
 Building-level union of curated emergency groups (deduplicated across the two resident archives):
   groups: 22
@@ -27,13 +29,15 @@ Building-level union of curated emergency groups (deduplicated across the two re
   elapsed days: 634
   inter-arrival intervals: 21
   exact mean gap: 634/21 (decimal rounded to 12 dp: 30.190476190476) days
-  exact mean-Gregorian-month normalized rate: 1022679/1014400 (decimal rounded to 12 dp: 1.008161474763)
+  arithmetic mean-Gregorian-month inter-arrival normalization: 1022679/1014400 (decimal rounded to 12 dp: 1.008161474763)
+  CAUTION: event-bounded inter-arrival normalization, not a complete-observation incidence rate.
   CAUTION: this union changes ascertainment when the second resident archive begins, so it is secondary to the long single-source series.
 
 SITE_A equal-period count comparison (Jan 1-Aug 6):
   2025: 7
   2026: 9
   exact ratio: 9/7
+  exact relative change: 2/7
   exact relative change percent: 200/7% (decimal rounded to 12 dp: 28.571428571429%)
 
 Cross-resident overlap at the same building:
@@ -49,26 +53,16 @@ Planned announced windows:
   exact mean hours: 13/3
   exact median hours: 4
 
-WBES Tbilisi 2023:
-  published average outages in a typical month: 0.8
-  exact rational representation of displayed value: 4/5
+WBES Tbilisi 2023 independent context:
+  firms experiencing electrical outages (published display value): 31.8%
+  average electrical outages in a typical month (published display value): 0.8
+  electricity as a major/very severe constraint (published display value): 38.6%
+  firms owning/sharing a generator (published display value): 29.8%
+  exact rational representation of displayed 0.8: 4/5
+  No direct resident-series/WBES outage-rate ratio is reported.
 The rational form exactly represents the decimal string published by WBES; it is not the hidden unrounded weighted survey estimate.
+WBES 'typical month' is not an arithmetic mean Gregorian calendar month; the published 0.8 has no exact conversion to 'one outage every N days'.
 
-PRIMARY — long single-source SITE_A:
-  normalized monthly notification rate: 48699/50720 (decimal rounded to 12 dp: 0.960153785489)
-  ratio to displayed WBES 0.8: 48699/40576 (decimal rounded to 12 dp: 1.200192231861)
-  relative excess: 203075/10144% (decimal rounded to 12 dp: 20.019223186120%)
-
-SECONDARY — building union:
-  normalized monthly notification rate: 1022679/1014400 (decimal rounded to 12 dp: 1.008161474763)
-  ratio to displayed WBES 0.8: 1022679/811520 (decimal rounded to 12 dp: 1.260201843454)
-  relative excess: 1055795/40576% (decimal rounded to 12 dp: 26.020184345426%)
-
-SECONDARY — shorter recent SITE_B:
-  normalized monthly notification rate: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
-  ratio to displayed WBES 0.8: 5411/3456 (decimal rounded to 12 dp: 1.565682870370)
-  relative excess: 48875/864% (decimal rounded to 12 dp: 56.568287037037%)
-
-Primary benchmark comparison uses SITE_A because it is the longest single-resident series with a stable source. The building union is secondary because source ascertainment changes when SITE_B begins; SITE_B is a shorter recent series.
-These are notification/inter-arrival proxies, not a statistically rigorous building-vs-Tbilisi physical-outage reliability ratio.
-Do not rewrite these metrics as SAIFI or as proven physical-outage frequency.
+No direct SITE_A/SITE_B/building-union to WBES outage-rate ratio is a headline result. WBES 'typical month' and the resident calendar inter-arrival normalizations are not definition-identical.
+Diagnostic arithmetic quotients remain in JSON only for reproducibility/backward compatibility.
+Do not rewrite resident inter-arrival metrics as SAIFI or as proven physical-outage frequency.
