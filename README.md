@@ -4,12 +4,13 @@ A reproducible, privacy-conscious evidence package about Telasi electricity-inte
 
 ## Critical interpretation rule
 
-This repository contains two distinct primary evidence layers:
+This repository contains three analytically distinct evidence/context layers:
 
-1. **resident-supplied SMS notifications**; and
-2. **Telasi public outage publications/API responses**.
+1. **resident-supplied SMS notifications**;
+2. **Telasi public outage publications/API responses**; and
+3. **independent external benchmarks/context**, including World Bank Enterprise Surveys (WBES).
 
-Neither layer is a complete utility incident ledger.
+Neither the resident SMS layer nor the Telasi publication layer is a complete utility incident ledger.
 
 For emergency SMS and many Telasi public notices, the stated date/time is an **estimated restoration time**. It is not automatically an outage-start timestamp or an actual restoration timestamp. The repository therefore does not equate notification/publication dates with distinct physical outage incidents and does not calculate physical outage duration from ETAs.
 
@@ -39,28 +40,72 @@ Group IDs use a future-safe form such as `G20260805-E01` (`E` emergency, `S` swi
 
 ## Current descriptive findings
 
-At `SITE_B`, emergency SMS carry restoration ETAs on **4, 5, and 6 August 2026**. This is three emergency notification groups at one service point on three consecutive ETA dates; without SMS receipt/restoration timestamps it is not proof of three distinct physical outage incidents.
+### SITE_B inter-arrival record
 
-For the equal period **1 January–6 August**, the same SITE_A series contains:
+SITE_B has **11 emergency restoration-ETA notification groups** from **2025-12-06 through 2026-08-06**. Between the first and last anchor there are exactly **243 elapsed days** and **10 consecutive inter-arrival intervals**.
+
+Therefore:
+
+- exact mean gap: **243/10 = 24.3 days**;
+- exact median gap: **45/2 = 22.5 days**;
+- exact standardized inter-arrival count per 30 days: **100/81**.
+
+These are notification-group inter-arrival metrics. They are **not** a physical-outage incidence rate and must not be restated as “a real outage every 24.3 days.” The supplied transcript is not a proven complete observation window and multiple notifications can belong to one physical incident.
+
+At SITE_B, emergency SMS carry restoration ETAs on **4, 5, and 6 August 2026**. This is three emergency notification groups at one service point on three consecutive ETA dates; without SMS receipt/restoration timestamps it is not proof of three distinct physical outage incidents.
+
+### Same-source SITE_A comparison
+
+For the equal period **1 January–6 August** in the same SITE_A series:
 
 - 2025: **7** emergency ETA-date groups;
 - 2026: **9** groups;
-- descriptive change: **+28.6%**.
+- exact count ratio: **9/7**;
+- exact relative change: **2/7**, or **200/7%** (decimal rounded to six places: **28.571429%**).
 
 This is a same-source change in the supplied notification record. Because SITE_A's exact public property mapping is unresolved, it must **not** be restated as an Orkhevi-wide outage-rate increase. No p-value or confidence interval is reported.
+
+### Cross-site overlap
 
 During the overlapping emergency period from **2025-12-06 through 2026-08-06**:
 
 - SITE_A: **10 unique emergency ETA dates**;
 - SITE_B: **11 unique emergency ETA dates**;
 - shared ETA dates: **10**;
-- Jaccard similarity of the unique ETA-date sets: **10/11 = 0.909**.
+- exact Jaccard similarity of the unique ETA-date sets: **10/11** (decimal rounded to 12 places: **0.909090909091**).
 
 All ten shared curated groups have matching ETA-time sets between the two sites. This strongly supports repeated shared affected scope, but does not prove a specific feeder, transformer, substation, or topology.
 
-For planned notices without a cancellation signal in the same curated group, **9 explicit announced windows total 39.0 hours**, mean **4.33 h** and median **4.00 h**. These are announced windows, not measured downtime.
+### Planned notices
 
-The analysis also prints per-site gaps between emergency **ETA-date notification groups**. Those values must not be described as “an outage every N days,” because SMS completeness and physical-incident identity are unknown.
+For planned notices without a cancellation signal in the same curated group:
+
+- **9** explicit announced windows;
+- exact total announced time: **39 hours**;
+- exact mean window: **13/3 hours = 4 h 20 min**;
+- exact median window: **4 hours**.
+
+These are announced windows, not measured downtime.
+
+## Independent Tbilisi benchmark: WBES 2023
+
+The repository preserves a captured **World Bank Enterprise Surveys (WBES), Georgia 2023, Tbilisi location subgroup** benchmark under [`data/benchmarks/`](data/benchmarks/).
+
+Relevant published/display values are:
+
+- firms experiencing electrical outages: **31.8%**;
+- average electrical outages in a **typical month**: **0.8**;
+- firms identifying electricity as a major or very severe constraint: **38.6%**;
+- firms owning or sharing a generator: **29.8%**.
+
+Two cautions are essential:
+
+1. these are finite-precision published/display values, not hidden unrounded survey estimates; and
+2. WBES **“typical month” is a survey concept, not the arithmetic mean Gregorian calendar month**.
+
+Accordingly, this repository does **not** convert WBES `0.8` into “one outage every N days” and does **not** claim a direct `X×` or `Y%` Orkhevi-vs-Tbilisi outage-rate difference. The populations, years, evidence sources, completeness, event identity and month definitions differ.
+
+See [`data/benchmarks/README.md`](data/benchmarks/README.md) and [`reports/exact-rate-analysis.txt`](reports/exact-rate-analysis.txt).
 
 ## Telasi public API evidence
 
@@ -85,15 +130,20 @@ See [`data/telasi_api/README.md`](data/telasi_api/README.md) and [`reports/telas
 - `data/derived/notifications.csv` — reproducibly parsed one-row-per-message table.
 - `data/derived/notification_groups.csv` — manually reviewed grouped SMS evidence.
 - `data/telasi_api/` — Telasi public API documentation and a cryptographically verified canonical raw snapshot plus provenance metadata for exploratory probes.
+- `data/benchmarks/` — independently sourced external benchmark captures/normalized values, currently WBES Tbilisi 2023.
 - `data/site_metadata.csv` — source roles and geographic cautions.
 - `data/external_context.csv` — separately sourced system-level context.
 - `scripts/build_notifications.py` — resident transcript parser.
-- `scripts/analyze.py` — conservative descriptive analysis.
+- `scripts/analyze.py` — conservative descriptive analysis using exact rational arithmetic for core metrics.
+- `scripts/analyze_exact_rates.py` — exact-fraction inter-arrival/statistical calculations and benchmark semantics.
+- `scripts/fetch_wbes_tbilisi.py` — reproducible WBES Tbilisi subgroup fetch/normalization.
 - `scripts/validate.py` — SMS/group/API provenance, schema, privacy, arithmetic and hash validation.
 - `scripts/fetch_telasi_api.py` — UTF-8-safe Telasi API fetcher/normalizer with real pagination.
 - `scripts/compare_telasi_api_sms.py` — exact ETA corroboration helper; corpus-wide negative conclusions require internally consistent records plus two agreeing count-complete pagination passes.
 - `scripts/reconstruct_telasi_api_snapshot.py` — cross-platform reconstruction and verification of the canonical raw API snapshot.
-- `tests/` — offline regression tests for SMS analysis, window logic and API fixtures/pagination.
+- `reports/analysis-output.txt` — deterministic conservative descriptive output.
+- `reports/exact-rate-analysis.txt` — deterministic exact-fraction output and external-benchmark interpretation.
+- `tests/` — offline regression tests.
 - `.github/workflows/quality.yml` — offline reproducibility checks.
 - `.github/workflows/telasi-api-live-probe.yml` — live API semantics/pagination probe.
 
@@ -104,12 +154,23 @@ No third-party Python packages are required.
 ```bash
 python scripts/build_notifications.py
 python scripts/validate.py
-python -m unittest discover -s tests -v
 python scripts/analyze.py --output reports/analysis-output.txt
+python scripts/analyze_exact_rates.py --output-text reports/exact-rate-analysis.txt --output-json artifacts/exact-rate-analysis.json
 python scripts/reconstruct_telasi_api_snapshot.py
 ```
 
-`quality.yml` additionally fails if rebuilding changes committed `notifications.csv` or `reports/analysis-output.txt`.
+The repository also contains regression tests, but they are not required merely to inspect or regenerate the analytical reports.
+
+`quality.yml` checks that rebuilding does not change committed `notifications.csv`, `reports/analysis-output.txt`, or `reports/exact-rate-analysis.txt`.
+
+## Refresh the independent WBES benchmark
+
+```bash
+python scripts/fetch_wbes_tbilisi.py \
+  --output-dir artifacts/wbes/tbilisi-2023
+```
+
+Live output remains under ignored `artifacts/` until it is deliberately reviewed and promoted as evidence.
 
 ## Fetch live Telasi data
 
@@ -148,4 +209,4 @@ The current evidence is insufficient for defensible calculation of physical outa
 
 ## License
 
-The repository's MIT License covers original scripts/software and analytical material authored by the repository owner. Third-party SMS text and raw Telasi API/publication material are excluded from that repository-owner MIT grant. See [`LICENSE-SCOPE.md`](LICENSE-SCOPE.md).
+The repository's MIT License covers original scripts/software and analytical material authored by the repository owner. Third-party source data are excluded from that repository-owner MIT grant; see [`LICENSE-SCOPE.md`](LICENSE-SCOPE.md).
