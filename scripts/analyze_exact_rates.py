@@ -1,389 +1,107 @@
 #!/usr/bin/env python3
 """Exact arithmetic for descriptive SMS-notification rate comparisons.
 
-Canonical values are kept as fractions. Decimal strings are emitted only as
-explicitly rounded representations for readability.
+SITE_A and SITE_B are stable legacy identifiers for two resident SMS archives
+from the same Orkhevi building, not two geographic sites. SITE_A is the
+neighbor's longer archive (supplied from 2024); SITE_B is the repository
+owner's archive (supplied from 2025).
 
-This script does NOT estimate SAIDI/SAIFI or physical-outage rates. Its rate
-normalizations are based on gaps between curated emergency restoration-ETA
-notification groups and are therefore descriptive notification metrics only.
+Canonical values are reduced fractions. Decimal strings are presentation only.
+This script does not estimate SAIDI/SAIFI or a true physical-outage rate.
 """
-
 from __future__ import annotations
-
-import argparse
-import csv
-import json
+import argparse, csv, json
 from datetime import date
 from decimal import Decimal, localcontext, ROUND_HALF_UP
 from fractions import Fraction
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_GROUPS = ROOT / "data" / "derived" / "notification_groups.csv"
-DEFAULT_WBES = ROOT / "data" / "benchmarks" / "wbes_tbilisi_2023.json"
-
-# Exact average Gregorian year: 365 + 97/400 days.
-DAYS_PER_GREGORIAN_YEAR = Fraction(146097, 400)
-DAYS_PER_GREGORIAN_MONTH = DAYS_PER_GREGORIAN_YEAR / 12
-DAYS_PER_30_DAY_PERIOD = Fraction(30, 1)
-
-
-def fraction_text(value: Fraction) -> str:
-    if value.denominator == 1:
-        return str(value.numerator)
-    return f"{value.numerator}/{value.denominator}"
-
-
-def terminating_decimal(value: Fraction) -> str | None:
-    """Return an exact finite decimal if the reduced denominator has only 2/5 factors."""
-    denominator = value.denominator
-    twos = fives = 0
-    while denominator % 2 == 0:
-        denominator //= 2
-        twos += 1
-    while denominator % 5 == 0:
-        denominator //= 5
-        fives += 1
-    if denominator != 1:
-        return None
-    places = max(twos, fives)
-    scale = 10**places
-    scaled = value * scale
-    assert scaled.denominator == 1
-    if places == 0:
-        return str(scaled.numerator)
-    sign = "-" if scaled.numerator < 0 else ""
-    digits = str(abs(scaled.numerator)).rjust(places + 1, "0")
-    return f"{sign}{digits[:-places]}.{digits[-places:]}"
-
-
-def rounded_decimal(value: Fraction, places: int = 12) -> str:
-    """Human-readable decimal, explicitly rounded; the fraction remains canonical."""
-    quantum = Decimal(1).scaleb(-places)
-    with localcontext() as ctx:
-        ctx.prec = max(50, places + 30)
-        dec = Decimal(value.numerator) / Decimal(value.denominator)
-        return format(dec.quantize(quantum, rounding=ROUND_HALF_UP), "f")
-
-
-def fraction_payload(value: Fraction) -> dict:
-    return {
-        "numerator": value.numerator,
-        "denominator": value.denominator,
-        "exact_fraction": fraction_text(value),
-        "exact_decimal": terminating_decimal(value),
-        "decimal_12dp_rounded": rounded_decimal(value, 12),
-    }
-
-
-def parse_decimal_fraction(text: str) -> Fraction:
-    """Parse a source decimal string exactly, never through binary float."""
-    return Fraction(text.strip())
-
-
-def load_groups(path: Path) -> list[dict]:
-    rows: list[dict] = []
-    with path.open(encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            row["anchor_date"] = date.fromisoformat(row["anchor_date"])
-            rows.append(row)
-    if not rows:
-        raise ValueError(f"no notification groups found in {path}")
-    return rows
-
-
-def site_in(row: dict, site_id: str) -> bool:
-    return site_id in row["evidence_sites"].split(";")
-
-
-def exact_median_int(values: list[int]) -> Fraction:
-    if not values:
-        raise ValueError("median of empty sequence")
-    ordered = sorted(values)
-    middle = len(ordered) // 2
-    if len(ordered) % 2:
-        return Fraction(ordered[middle], 1)
-    return Fraction(ordered[middle - 1] + ordered[middle], 2)
-
-
-def gap_metrics(rows: list[dict]) -> dict:
-    ordered = sorted(rows, key=lambda r: (r["anchor_date"], r["group_id"]))
-    if len(ordered) < 2:
-        raise ValueError("at least two rows are required for inter-arrival analysis")
-    gaps = [
-        (current["anchor_date"] - previous["anchor_date"]).days
-        for previous, current in zip(ordered, ordered[1:])
-    ]
-    elapsed_days = (ordered[-1]["anchor_date"] - ordered[0]["anchor_date"]).days
-    interval_count = len(gaps)
-    assert sum(gaps) == elapsed_days
-    mean_gap = Fraction(elapsed_days, interval_count)
-    rate_30 = Fraction(interval_count, elapsed_days) * DAYS_PER_30_DAY_PERIOD
-    rate_gregorian_month = Fraction(interval_count, elapsed_days) * DAYS_PER_GREGORIAN_MONTH
-    return {
-        "group_count": len(ordered),
-        "first_anchor_date": ordered[0]["anchor_date"].isoformat(),
-        "last_anchor_date": ordered[-1]["anchor_date"].isoformat(),
-        "elapsed_days_between_first_and_last_anchor": elapsed_days,
-        "interarrival_interval_count": interval_count,
-        "gaps_days": gaps,
-        "mean_gap_days": fraction_payload(mean_gap),
-        "median_gap_days": fraction_payload(exact_median_int(gaps)),
-        "min_gap_days": min(gaps),
-        "max_gap_days": max(gaps),
-        "standardized_interarrival_groups_per_30_days": fraction_payload(rate_30),
-        "standardized_interarrival_groups_per_mean_gregorian_month": fraction_payload(rate_gregorian_month),
-        "normalization_note": (
-            "These are event-bounded inter-arrival normalizations: interval_count / elapsed_days, "
-            "not observation-window incidence rates. The mean Gregorian month is exactly "
-            "146097/(400*12) = 48699/1600 days by convention."
-        ),
-    }
-
-
-def load_wbes(path: Path) -> dict:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    indicators = data.get("indicators")
-    if not isinstance(indicators, dict):
-        raise ValueError(f"{path}: expected an 'indicators' object")
-    monthly = indicators.get("bready_in2")
-    if not isinstance(monthly, dict) or "published_value" not in monthly:
-        raise ValueError(f"{path}: missing bready_in2 published_value")
-    return data
-
-
-def site_a_equal_period(emergency: list[dict]) -> dict:
-    def count(year: int) -> int:
-        start = date(year, 1, 1)
-        end = date(year, 8, 6)
-        return sum(
-            site_in(r, "SITE_A") and start <= r["anchor_date"] <= end
-            for r in emergency
-        )
-
-    n_2025 = count(2025)
-    n_2026 = count(2026)
-    if n_2025 == 0:
-        raise ValueError("SITE_A 2025 comparison denominator is zero")
-    ratio = Fraction(n_2026, n_2025)
-    change = ratio - 1
-    return {
-        "period": "Jan 1 through Aug 6 inclusive",
-        "2025_group_count": n_2025,
-        "2026_group_count": n_2026,
-        "count_ratio_2026_over_2025": fraction_payload(ratio),
-        "relative_change": fraction_payload(change),
-        "relative_change_percent": fraction_payload(change * 100),
-    }
-
-
-def cross_site_overlap(emergency: list[dict]) -> dict:
-    start = date(2025, 12, 6)
-    end = max(r["anchor_date"] for r in emergency)
-    a_dates = {
-        r["anchor_date"] for r in emergency
-        if site_in(r, "SITE_A") and start <= r["anchor_date"] <= end
-    }
-    b_dates = {
-        r["anchor_date"] for r in emergency
-        if site_in(r, "SITE_B") and start <= r["anchor_date"] <= end
-    }
-    shared = a_dates & b_dates
-    union = a_dates | b_dates
-    return {
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-        "site_a_unique_eta_dates": len(a_dates),
-        "site_b_unique_eta_dates": len(b_dates),
-        "shared_eta_dates": len(shared),
-        "union_eta_dates": len(union),
-        "jaccard": fraction_payload(Fraction(len(shared), len(union))) if union else None,
-    }
-
-
-def planned_window_metrics(rows: list[dict]) -> dict:
-    selected = [
-        r for r in rows
-        if r["category"] == "planned"
-        and r["status"] in {"announced", "announced_with_possible_undated_update"}
-        and r["scheduled_window_hours_explicit"]
-    ]
-    hours = [parse_decimal_fraction(r["scheduled_window_hours_explicit"]) for r in selected]
-    if not hours:
-        raise ValueError("no explicit planned windows found")
-    total = sum(hours, Fraction(0, 1))
-    ordered = sorted(hours)
-    middle = len(ordered) // 2
-    median = ordered[middle] if len(ordered) % 2 else (ordered[middle - 1] + ordered[middle]) / 2
-    return {
-        "group_count": len(hours),
-        "total_announced_hours": fraction_payload(total),
-        "mean_announced_hours": fraction_payload(total / len(hours)),
-        "median_announced_hours": fraction_payload(median),
-    }
-
-
-def build_analysis(groups_path: Path, wbes_path: Path) -> dict:
-    rows = load_groups(groups_path)
-    emergency = [r for r in rows if r["category"] == "emergency"]
-    site_a = [r for r in emergency if site_in(r, "SITE_A")]
-    site_b = [r for r in emergency if site_in(r, "SITE_B")]
-
-    a_gaps = gap_metrics(site_a)
-    b_gaps = gap_metrics(site_b)
-
-    wbes = load_wbes(wbes_path)
-    wbes_text = str(wbes["indicators"]["bready_in2"]["published_value"])
-    wbes_display_rate = parse_decimal_fraction(wbes_text)
-    site_b_gregorian_month = Fraction(
-        b_gaps["standardized_interarrival_groups_per_mean_gregorian_month"]["numerator"],
-        b_gaps["standardized_interarrival_groups_per_mean_gregorian_month"]["denominator"],
-    )
-    ratio_to_wbes_display = site_b_gregorian_month / wbes_display_rate
-    excess_over_wbes_display = ratio_to_wbes_display - 1
-
-    return {
-        "schema_version": 1,
-        "arithmetic_policy": {
-            "canonical_representation": "reduced rational fractions",
-            "binary_float_used_for_core_metrics": False,
-            "decimal_policy": "decimal_12dp_rounded is presentation-only; exact_fraction is canonical",
-        },
-        "metric_scope_warning": (
-            "Emergency rows are curated restoration-ETA notification groups, not proven distinct physical outages. "
-            "The supplied transcript span is not a proven complete observation window."
-        ),
-        "calendar_constants": {
-            "mean_gregorian_year_days": fraction_payload(DAYS_PER_GREGORIAN_YEAR),
-            "mean_gregorian_month_days": fraction_payload(DAYS_PER_GREGORIAN_MONTH),
-            "standard_30_day_period_days": fraction_payload(DAYS_PER_30_DAY_PERIOD),
-        },
-        "site_a_emergency_interarrival": a_gaps,
-        "site_b_emergency_interarrival": b_gaps,
-        "site_a_equal_period_comparison": site_a_equal_period(emergency),
-        "cross_site_overlap": cross_site_overlap(emergency),
-        "planned_windows": planned_window_metrics(rows),
-        "wbes_tbilisi_2023": {
-            "source": wbes.get("source"),
-            "source_endpoint": wbes.get("source_endpoint"),
-            "published_average_outages_typical_month_text": wbes_text,
-            "published_average_outages_typical_month_fraction_from_display": fraction_payload(wbes_display_rate),
-            "precision_warning": (
-                "The fraction above is the exact rational representation of the decimal string published by the "
-                "World Bank API. It is not the hidden unrounded survey estimate."
-            ),
-        },
-        "site_b_vs_wbes_descriptive_normalization": {
-            "site_b_mean_gregorian_month_interarrival_rate": fraction_payload(site_b_gregorian_month),
-            "wbes_published_typical_month_rate_from_display": fraction_payload(wbes_display_rate),
-            "ratio_site_b_over_wbes_display": fraction_payload(ratio_to_wbes_display),
-            "relative_excess_over_wbes_display": fraction_payload(excess_over_wbes_display),
-            "relative_excess_percent_over_wbes_display": fraction_payload(excess_over_wbes_display * 100),
-            "comparison_warning": (
-                "This ratio is mathematically exact for the stated normalization and the displayed WBES value, "
-                "but it is not a statistically rigorous Orkhevi-vs-Tbilisi outage-rate ratio because the source "
-                "metrics, populations, years, completeness, and event identity differ."
-            ),
-        },
-    }
-
-
-def render_text(data: dict) -> str:
-    b = data["site_b_emergency_interarrival"]
-    a = data["site_a_emergency_interarrival"]
-    ytd = data["site_a_equal_period_comparison"]
-    overlap = data["cross_site_overlap"]
-    planned = data["planned_windows"]
-    comparison = data["site_b_vs_wbes_descriptive_normalization"]
-    wbes = data["wbes_tbilisi_2023"]
-
-    lines = [
-        "Exact descriptive rate analysis",
-        "===============================",
-        "",
-        data["metric_scope_warning"],
-        "",
-        "Canonical arithmetic rule: reduced fractions are exact; decimal_12dp values are rounded presentation only.",
-        "",
-        "SITE_B emergency restoration-ETA notification-group inter-arrivals:",
-        f"  groups: {b['group_count']}",
-        f"  first..last anchor: {b['first_anchor_date']} .. {b['last_anchor_date']}",
-        f"  elapsed days: {b['elapsed_days_between_first_and_last_anchor']}",
-        f"  inter-arrival intervals: {b['interarrival_interval_count']}",
-        f"  exact mean gap: {b['mean_gap_days']['exact_fraction']} days"
-        + (f" = {b['mean_gap_days']['exact_decimal']} days" if b['mean_gap_days']['exact_decimal'] else ""),
-        f"  exact median gap: {b['median_gap_days']['exact_fraction']} days"
-        + (f" = {b['median_gap_days']['exact_decimal']} days" if b['median_gap_days']['exact_decimal'] else ""),
-        f"  exact standardized rate / 30 days: {b['standardized_interarrival_groups_per_30_days']['exact_fraction']}",
-        "  standardized rate / mean Gregorian month: "
-        f"{b['standardized_interarrival_groups_per_mean_gregorian_month']['exact_fraction']} "
-        f"(decimal rounded to 12 dp: {b['standardized_interarrival_groups_per_mean_gregorian_month']['decimal_12dp_rounded']})",
-        "",
-        "SITE_A emergency restoration-ETA notification-group inter-arrivals:",
-        f"  groups: {a['group_count']}",
-        f"  exact mean gap: {a['mean_gap_days']['exact_fraction']} days",
-        f"  exact median gap: {a['median_gap_days']['exact_fraction']} days",
-        "",
-        "SITE_A equal-period count comparison (Jan 1-Aug 6):",
-        f"  2025: {ytd['2025_group_count']}",
-        f"  2026: {ytd['2026_group_count']}",
-        f"  exact ratio: {ytd['count_ratio_2026_over_2025']['exact_fraction']}",
-        f"  exact relative change: {ytd['relative_change']['exact_fraction']}",
-        f"  exact relative change percent: {ytd['relative_change_percent']['exact_fraction']}% "
-        f"(decimal rounded to 12 dp: {ytd['relative_change_percent']['decimal_12dp_rounded']}%)",
-        "",
-        "Cross-site overlap:",
-        f"  exact Jaccard: {overlap['jaccard']['exact_fraction']} "
-        f"(decimal rounded to 12 dp: {overlap['jaccard']['decimal_12dp_rounded']})",
-        "",
-        "Planned announced windows:",
-        f"  groups: {planned['group_count']}",
-        f"  exact total hours: {planned['total_announced_hours']['exact_fraction']}",
-        f"  exact mean hours: {planned['mean_announced_hours']['exact_fraction']}",
-        f"  exact median hours: {planned['median_announced_hours']['exact_fraction']}",
-        "",
-        "WBES Tbilisi 2023 comparison:",
-        f"  published average outages in a typical month: {wbes['published_average_outages_typical_month_text']}",
-        "  exact rational representation of that displayed decimal: "
-        f"{wbes['published_average_outages_typical_month_fraction_from_display']['exact_fraction']}",
-        "  SITE_B inter-arrival rate normalized to exact mean Gregorian month: "
-        f"{comparison['site_b_mean_gregorian_month_interarrival_rate']['exact_fraction']}",
-        "  exact ratio against displayed WBES value: "
-        f"{comparison['ratio_site_b_over_wbes_display']['exact_fraction']} "
-        f"(decimal rounded to 12 dp: {comparison['ratio_site_b_over_wbes_display']['decimal_12dp_rounded']})",
-        "  exact relative excess against displayed WBES value: "
-        f"{comparison['relative_excess_percent_over_wbes_display']['exact_fraction']}% "
-        f"(decimal rounded to 12 dp: {comparison['relative_excess_percent_over_wbes_display']['decimal_12dp_rounded']}%)",
-        "",
-        wbes["precision_warning"],
-        comparison["comparison_warning"],
-        "",
-        "Do not rewrite the SITE_B gap/rate metrics as a physical-outage rate or SAIFI.",
-    ]
-    return "\n".join(lines) + "\n"
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--groups", type=Path, default=DEFAULT_GROUPS)
-    parser.add_argument("--wbes", type=Path, default=DEFAULT_WBES)
-    parser.add_argument("--output-json", type=Path)
-    parser.add_argument("--output-text", type=Path)
-    args = parser.parse_args()
-
-    data = build_analysis(args.groups, args.wbes)
-    text = render_text(data)
-    print(text, end="")
-
-    if args.output_json:
-        args.output_json.parent.mkdir(parents=True, exist_ok=True)
-        args.output_json.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-    if args.output_text:
-        args.output_text.parent.mkdir(parents=True, exist_ok=True)
-        args.output_text.write_text(text, encoding="utf-8", newline="\n")
+ROOT=Path(__file__).resolve().parents[1]
+DEFAULT_GROUPS=ROOT/'data'/'derived'/'notification_groups.csv'
+DEFAULT_WBES=ROOT/'data'/'benchmarks'/'wbes_tbilisi_2023.json'
+DAYS_PER_GREGORIAN_YEAR=Fraction(146097,400)
+DAYS_PER_GREGORIAN_MONTH=DAYS_PER_GREGORIAN_YEAR/12
+SOURCE_LABELS={
+    'SITE_A': "neighbor resident archive (same building; longer record, starts 2024)",
+    'SITE_B': "repository-owner resident archive (same building; starts 2025)",
+}
+def fraction_text(v): return str(v.numerator) if v.denominator==1 else f'{v.numerator}/{v.denominator}'
+def terminating_decimal(v):
+    d=v.denominator; a=b=0
+    while d%2==0: d//=2; a+=1
+    while d%5==0: d//=5; b+=1
+    if d!=1:return None
+    p=max(a,b); s=v*(10**p); assert s.denominator==1
+    if p==0:return str(s.numerator)
+    sign='-' if s.numerator<0 else ''; digits=str(abs(s.numerator)).rjust(p+1,'0')
+    return f'{sign}{digits[:-p]}.{digits[-p:]}'
+def rounded_decimal(v,places=12):
+    q=Decimal(1).scaleb(-places)
+    with localcontext() as c:
+        c.prec=max(50,places+30); x=Decimal(v.numerator)/Decimal(v.denominator)
+        return format(x.quantize(q,rounding=ROUND_HALF_UP),'f')
+def payload(v): return {'numerator':v.numerator,'denominator':v.denominator,'exact_fraction':fraction_text(v),'exact_decimal':terminating_decimal(v),'decimal_12dp_rounded':rounded_decimal(v,12)}
+def load_groups(path):
+    out=[]
+    with path.open(encoding='utf-8',newline='') as f:
+        for r in csv.DictReader(f): r['anchor_date']=date.fromisoformat(r['anchor_date']); out.append(r)
+    if not out: raise ValueError('no groups')
+    return out
+def source_in(r,s): return s in r['evidence_sites'].split(';')
+def median_int(vals):
+    o=sorted(vals); m=len(o)//2
+    return Fraction(o[m],1) if len(o)%2 else Fraction(o[m-1]+o[m],2)
+def gap_metrics(rows):
+    o=sorted(rows,key=lambda r:(r['anchor_date'],r['group_id']))
+    if len(o)<2: raise ValueError('need >=2 rows')
+    gaps=[(b['anchor_date']-a['anchor_date']).days for a,b in zip(o,o[1:])]
+    elapsed=(o[-1]['anchor_date']-o[0]['anchor_date']).days
+    assert sum(gaps)==elapsed
+    n=len(gaps); mean=Fraction(elapsed,n)
+    return {'group_count':len(o),'first_anchor_date':o[0]['anchor_date'].isoformat(),'last_anchor_date':o[-1]['anchor_date'].isoformat(),'elapsed_days_between_first_and_last_anchor':elapsed,'interarrival_interval_count':n,'gaps_days':gaps,'mean_gap_days':payload(mean),'median_gap_days':payload(median_int(gaps)),'min_gap_days':min(gaps),'max_gap_days':max(gaps),'standardized_interarrival_groups_per_30_days':payload(Fraction(n,elapsed)*30),'standardized_interarrival_groups_per_mean_gregorian_month':payload(Fraction(n,elapsed)*DAYS_PER_GREGORIAN_MONTH)}
+def equal_period(emergency):
+    def c(y):
+        s,e=date(y,1,1),date(y,8,6); return sum(source_in(r,'SITE_A') and s<=r['anchor_date']<=e for r in emergency)
+    a,b=c(2025),c(2026); ratio=Fraction(b,a); ch=ratio-1
+    return {'period':'Jan 1 through Aug 6 inclusive','2025_group_count':a,'2026_group_count':b,'count_ratio_2026_over_2025':payload(ratio),'relative_change':payload(ch),'relative_change_percent':payload(ch*100)}
+def cross_resident_overlap(emergency):
+    start=date(2025,12,6); end=max(r['anchor_date'] for r in emergency)
+    a={r['anchor_date'] for r in emergency if source_in(r,'SITE_A') and start<=r['anchor_date']<=end}
+    b={r['anchor_date'] for r in emergency if source_in(r,'SITE_B') and start<=r['anchor_date']<=end}
+    u=a|b; sh=a&b
+    return {'start':start.isoformat(),'end':end.isoformat(),'source_a_unique_eta_dates':len(a),'source_b_unique_eta_dates':len(b),'shared_eta_dates':len(sh),'union_eta_dates':len(u),'jaccard':payload(Fraction(len(sh),len(u)))}
+def planned(rows):
+    selected=[r for r in rows if r['category']=='planned' and r['status'] in {'announced','announced_with_possible_undated_update'} and r['scheduled_window_hours_explicit']]
+    hrs=[Fraction(r['scheduled_window_hours_explicit']) for r in selected]; total=sum(hrs,Fraction())
+    o=sorted(hrs); m=len(o)//2; med=o[m] if len(o)%2 else (o[m-1]+o[m])/2
+    return {'group_count':len(hrs),'total_announced_hours':payload(total),'mean_announced_hours':payload(total/len(hrs)),'median_announced_hours':payload(med)}
+def comparison(metrics,wbes_rate):
+    m=metrics['standardized_interarrival_groups_per_mean_gregorian_month']; r=Fraction(m['numerator'],m['denominator'])
+    ratio=r/wbes_rate; excess=ratio-1
+    return {'mean_gregorian_month_interarrival_rate':payload(r),'wbes_published_typical_month_rate_from_display':payload(wbes_rate),'ratio_over_wbes_display':payload(ratio),'relative_excess_over_wbes_display':payload(excess),'relative_excess_percent_over_wbes_display':payload(excess*100)}
+def build_analysis(groups_path,wbes_path):
+    rows=load_groups(groups_path); emergency=[r for r in rows if r['category']=='emergency']
+    a=[r for r in emergency if source_in(r,'SITE_A')]; b=[r for r in emergency if source_in(r,'SITE_B')]
+    ma,mb,building=gap_metrics(a),gap_metrics(b),gap_metrics(emergency)
+    w=json.loads(wbes_path.read_text(encoding='utf-8')); wt=str(w['indicators']['bready_in2']['published_value']); wr=Fraction(wt)
+    return {'schema_version':2,'source_identity':{'SITE_A':SOURCE_LABELS['SITE_A'],'SITE_B':SOURCE_LABELS['SITE_B'],'relationship':'same Orkhevi building; separate resident/subscriber SMS archives','legacy_identifier_warning':'SITE_A/SITE_B are retained for stable references but must not be interpreted as two geographic sites.'},'metric_scope_warning':'Emergency rows are curated restoration-ETA notification groups, not proven distinct physical outages. Archive completeness is not established.','calendar_constants':{'mean_gregorian_year_days':payload(DAYS_PER_GREGORIAN_YEAR),'mean_gregorian_month_days':payload(DAYS_PER_GREGORIAN_MONTH)},'source_a_emergency_interarrival':ma,'source_b_emergency_interarrival':mb,'building_union_emergency_interarrival':building,'source_a_equal_period_comparison':equal_period(emergency),'cross_resident_overlap':cross_resident_overlap(emergency),'planned_windows':planned(rows),'wbes_tbilisi_2023':{'source':w.get('source'),'source_endpoint':w.get('source_endpoint'),'published_average_outages_typical_month_text':wt,'published_average_outages_typical_month_fraction_from_display':payload(wr),'precision_warning':'The rational form exactly represents the decimal string published by WBES; it is not the hidden unrounded weighted survey estimate.'},'benchmark_comparisons':{'primary_long_single_source_a':comparison(ma,wr),'secondary_building_union':comparison(building,wr),'secondary_recent_source_b':comparison(mb,wr)},'comparison_policy':'Primary benchmark comparison uses SITE_A because it is the longest single-resident series with a stable source. The building union is secondary because source ascertainment changes when SITE_B begins; SITE_B is a shorter recent series.'}
+def render_text(d):
+    a=d['source_a_emergency_interarrival']; b=d['source_b_emergency_interarrival']; u=d['building_union_emergency_interarrival']; y=d['source_a_equal_period_comparison']; o=d['cross_resident_overlap']; p=d['planned_windows']; w=d['wbes_tbilisi_2023']; c=d['benchmark_comparisons']
+    def lm(name,m):
+        gap=m['mean_gap_days']; rate=m['standardized_interarrival_groups_per_mean_gregorian_month']
+        gaptext=gap['exact_fraction']+(f" = {gap['exact_decimal']}" if gap['exact_decimal'] else f" (decimal rounded to 12 dp: {gap['decimal_12dp_rounded']})")
+        return [name,f"  groups: {m['group_count']}",f"  first..last anchor: {m['first_anchor_date']} .. {m['last_anchor_date']}",f"  elapsed days: {m['elapsed_days_between_first_and_last_anchor']}",f"  inter-arrival intervals: {m['interarrival_interval_count']}",f"  exact mean gap: {gaptext} days",f"  exact mean-Gregorian-month normalized rate: {rate['exact_fraction']} (decimal rounded to 12 dp: {rate['decimal_12dp_rounded']})"]
+    L=['Exact descriptive rate analysis','===============================','',d['source_identity']['relationship']+'.',d['source_identity']['legacy_identifier_warning'],d['metric_scope_warning'],'']
+    L+=lm('SITE_A / neighbor resident archive (same building; longest single-source record):',a)+['']
+    L+=lm('SITE_B / repository-owner resident archive (same building; shorter recent record):',b)+['']
+    L+=lm('Building-level union of curated emergency groups (deduplicated across the two resident archives):',u)+['  CAUTION: this union changes ascertainment when the second resident archive begins, so it is secondary to the long single-source series.','']
+    L += ['SITE_A equal-period count comparison (Jan 1-Aug 6):',f"  2025: {y['2025_group_count']}",f"  2026: {y['2026_group_count']}",f"  exact ratio: {y['count_ratio_2026_over_2025']['exact_fraction']}",f"  exact relative change percent: {y['relative_change_percent']['exact_fraction']}% (decimal rounded to 12 dp: {y['relative_change_percent']['decimal_12dp_rounded']}%)",'', 'Cross-resident overlap at the same building:',f"  SITE_A unique ETA dates: {o['source_a_unique_eta_dates']}",f"  SITE_B unique ETA dates: {o['source_b_unique_eta_dates']}",f"  shared ETA dates: {o['shared_eta_dates']}",f"  exact Jaccard: {o['jaccard']['exact_fraction']} (decimal rounded to 12 dp: {o['jaccard']['decimal_12dp_rounded']})",'  Interpretation: corroboration between two resident SMS archives for the same building; not evidence about two separate service points or network topology.','', 'Planned announced windows:',f"  groups: {p['group_count']}",f"  exact total hours: {p['total_announced_hours']['exact_fraction']}",f"  exact mean hours: {p['mean_announced_hours']['exact_fraction']}",f"  exact median hours: {p['median_announced_hours']['exact_fraction']}",'', 'WBES Tbilisi 2023:',f"  published average outages in a typical month: {w['published_average_outages_typical_month_text']}",f"  exact rational representation of displayed value: {w['published_average_outages_typical_month_fraction_from_display']['exact_fraction']}",w['precision_warning'],'']
+    for label,x in [('PRIMARY — long single-source SITE_A',c['primary_long_single_source_a']),('SECONDARY — building union',c['secondary_building_union']),('SECONDARY — shorter recent SITE_B',c['secondary_recent_source_b'])]:
+        L += [label+':',f"  normalized monthly notification rate: {x['mean_gregorian_month_interarrival_rate']['exact_fraction']} (decimal rounded to 12 dp: {x['mean_gregorian_month_interarrival_rate']['decimal_12dp_rounded']})",f"  ratio to displayed WBES 0.8: {x['ratio_over_wbes_display']['exact_fraction']} (decimal rounded to 12 dp: {x['ratio_over_wbes_display']['decimal_12dp_rounded']})",f"  relative excess: {x['relative_excess_percent_over_wbes_display']['exact_fraction']}% (decimal rounded to 12 dp: {x['relative_excess_percent_over_wbes_display']['decimal_12dp_rounded']}%)",'']
+    L += [d['comparison_policy'],'These are notification/inter-arrival proxies, not a statistically rigorous building-vs-Tbilisi physical-outage reliability ratio.','Do not rewrite these metrics as SAIFI or as proven physical-outage frequency.']
+    return '\n'.join(L)+'\n'
+def main():
+    ap=argparse.ArgumentParser(); ap.add_argument('--groups',type=Path,default=DEFAULT_GROUPS); ap.add_argument('--wbes',type=Path,default=DEFAULT_WBES); ap.add_argument('--output-json',type=Path); ap.add_argument('--output-text',type=Path); a=ap.parse_args(); d=build_analysis(a.groups,a.wbes); t=render_text(d); print(t,end='')
+    if a.output_json: a.output_json.parent.mkdir(parents=True,exist_ok=True); a.output_json.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
+    if a.output_text: a.output_text.parent.mkdir(parents=True,exist_ok=True); a.output_text.write_text(t,encoding='utf-8',newline='\n')
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__=='__main__': raise SystemExit(main())
