@@ -1,4 +1,0 @@
-date,approx_time,event_type,scope,note,source_url
-2026-07-24,~00:10,nationwide_blackout,Georgia,Nationwide interruption reported; GSE said restoration and cause investigation were underway.,https://civil.ge/archives/745680
-2026-07-25,~08:00,nationwide_blackout,Georgia,Second nationwide interruption in two days; causes were still under investigation at the time.,https://civil.ge/archives/745851
-2026-08-05,,nationwide_blackout,Georgia,Separate nationwide event reported in early August; keep separate from SITE_A/SITE_B daytime SMS unless exact timing/source is documented.,

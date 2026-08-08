@@ -1,0 +1,35 @@
+group_id,anchor_date,anchor_date_kind,category,status,evidence_sites,supporting_message_ids,eta_values,scheduled_start,scheduled_end,scheduled_window_hours_explicit,incident_count_min,incident_count_max,grouping_confidence,notes
+G20241110,2024-11-10,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-038,17:53,,,,1,1,high,"Emergency SMS. Anchor date is the restoration ETA date, not a proven outage-start date."
+G20241111,2024-11-11,restoration_eta_date,network_switching,observed_notification,SITE_A,SITE_A-037,19:42,,,,1,1,high,"Supply interruption attributed to network switching (gadartva), kept separate from emergency."
+G20241202,2024-12-02,scheduled_interruption_date,planned,announced,SITE_A,SITE_A-036,,10:00,11:00,1,0,1,high,Advance notice of an interruption window. Actual interruption is not independently verified.
+G20241213,2024-12-13,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-035,16:14,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20241231,2024-12-31,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-034,11:02,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20250117,2025-01-17,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-033,19:22,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20250119,2025-01-19,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-032,23:22,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20250207,2025-02-07,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-031,18:27,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20250220,2025-02-20,scheduled_interruption_date,planned,announced,SITE_A,SITE_A-030,,11:00,14:00,3,0,1,high,Advance notice only; actual interruption duration unknown.
+G20250314,2025-03-14,scheduled_interruption_date,planned,announced,SITE_A,SITE_A-029,,11:00,14:00,3,0,1,high,Advance notice only; actual interruption duration unknown.
+G20250422,2025-04-22,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-028,19:13,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20250628,2025-06-28,restoration_eta_date,emergency,ambiguous_same_day,SITE_A,SITE_A-026;SITE_A-027,01:18;17:43,,,,1,2,low,Two same-day emergency SMS with very different ETAs. Without receipt timestamps this may be one updated incident or two separate incidents.
+G20250708,2025-07-08,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-025,15:44,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20250728,2025-07-28,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-024,00:16,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20251009,2025-10-09,scheduled_interruption_date,planned,cancellation_only,SITE_A,SITE_A-023,,10:00 AM,06:00 PM,8,0,0,high,Cancellation/postponement SMS says supply will not be interrupted in the referenced window. Original advance notice is not present in supplied transcript.
+G20251013,2025-10-13,scheduled_interruption_date,planned,announced,SITE_A,SITE_A-022,,11:00,15:00,4,0,1,high,Advance notice only; actual interruption duration unknown.
+G20251015,2025-10-15,scheduled_interruption_date,planned,announced,SITE_A,SITE_A-021,,11:00,17:00,6,0,1,high,Advance notice only; actual interruption duration unknown.
+G20251102,2025-11-02,scheduled_interruption_date,planned,announced_with_possible_undated_update,SITE_A,SITE_A-020,,11:00,14:00,3,0,1,medium,"The explicit notice is 11:00–14:00. SITE_A-019 is an undated message saying planned-work completion moved to 16:00; association with 2025-11-02 is plausible from transcript adjacency but not proven, so the explicit window remains 3 h."
+G20251105,2025-11-05,restoration_eta_date,emergency,observed_notification,SITE_A,SITE_A-018,14:22,,,,1,1,high,Emergency SMS; date is restoration ETA date.
+G20251112,2025-11-12,scheduled_interruption_date,planned,announced,SITE_A;SITE_B,SITE_A-017;SITE_B-001,,11:00,18:00,7,0,1,high,Matching advance notices at both sites.
+G20251128,2025-11-28,scheduled_interruption_date,planned,cancellation_notice_present,SITE_A;SITE_B,SITE_A-016;SITE_B-002;SITE_B-003,,11:00,18:00,7,0,1,medium,"Both sites have matching advance notices; SITE_B has an explicit cancellation. No cancellation SMS for SITE_A is present in the supplied SITE_A transcript, so settlement-wide cancellation is not asserted."
+G20251201,2025-12-01,scheduled_interruption_date,planned,announced,SITE_A;SITE_B,SITE_A-015;SITE_B-004,,11:00,16:00,5,0,1,high,Matching advance notices at both sites.
+G20251206,2025-12-06,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-014;SITE_B-005,17:11,,,,1,1,high,Matching emergency SMS ETA at both sites.
+G20260112,2026-01-12,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-013;SITE_B-006,18:43,,,,1,1,high,Matching emergency SMS ETA at both sites.
+G20260113,2026-01-13,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-012;SITE_B-007,16:50,,,,1,1,high,Matching emergency SMS ETA at both sites.
+G20260122,2026-01-22,restoration_eta_date,emergency,same_day_eta_update_candidate,SITE_A;SITE_B,SITE_A-010;SITE_A-011;SITE_B-008;SITE_B-009,12:00;20:00,,,,1,1,medium,"Two ETA values on the same date at both sites. The 20:00 message cites high-voltage cable damage. The order 12:00→20:00 is plausible but receipt timestamps are absent, so temporal ordering is treated as inferred rather than proven."
+G20260312,2026-03-12,scheduled_interruption_date,planned,announced,SITE_A;SITE_B,SITE_A-009;SITE_B-010,,11:00,18:00,7,0,1,high,Matching advance notices at both sites.
+G20260314,2026-03-14,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-008;SITE_B-011,00:22,,,,1,1,high,Matching emergency SMS ETA at both sites.
+G20260407,2026-04-07,restoration_eta_date,emergency,same_day_eta_update_candidate,SITE_A;SITE_B,SITE_A-005;SITE_A-006;SITE_A-007;SITE_B-012;SITE_B-013,19:33;22:29,,,,1,1,medium,Two ETA values at both sites; SITE_A also contains an exact duplicate 22:29 SMS. Update direction is plausible but not proven without receipt timestamps.
+G20260513,2026-05-13,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-004;SITE_B-014,13:39,,,,1,1,high,Matching emergency SMS ETA at both sites.
+G20260714,2026-07-14,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-003;SITE_B-015,15:19,,,,1,1,high,Matching emergency SMS ETA at both sites.
+G20260804,2026-08-04,restoration_eta_date,emergency,site_b_only_in_supplied_record,SITE_B,SITE_B-016,14:32,,,,1,1,high,Present at SITE_B only in supplied transcripts. Absence at SITE_A does not prove SITE_A retained power or received no notification.
+G20260805,2026-08-05,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-002;SITE_B-017,12:54,,,,1,1,high,Matching emergency SMS ETA at both sites. This daytime ETA is distinct from the nationwide blackout reported around 20:10 on 5 August.
+G20260806,2026-08-06,restoration_eta_date,emergency,observed_notification,SITE_A;SITE_B,SITE_A-001;SITE_B-018,17:40,,,,1,1,high,Matching emergency SMS ETA at both sites.

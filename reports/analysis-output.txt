@@ -1,22 +1,33 @@
-Observation: 2024-11-10 to 2026-08-06 inclusive = 635 days
-Emergency interruption dates (conservative): 22
-Network-switching interruption dates: 1
-Non-cancelled planned interruption dates: 9
-Cancelled planned-work dates: 2
-All non-cancelled recorded/announced interruption dates: 32
-Emergency-date annualized rate: 12.65 per 365 days
-Emergency gaps: mean=30.19 d, median=21.0 d, min=1 d, max=100 d
+Source-record anchor span: 2024-11-10 to 2026-08-06 inclusive = 635 calendar days
+IMPORTANT: this is a retrospective transcript span, not a proven complete observation window.
+Emergency notification groups keyed by restoration-ETA date: 22
+Network-switching notification groups keyed by restoration-ETA date: 1
+Planned-work notification groups keyed by scheduled date: 11
 
-Non-cancelled announced planned windows: 41.0 h total; mean=4.56 h/event
-Cancelled announced windows: 15.0 h
+Emergency ETA-date gaps (descriptive; not verified outage inter-arrival times):
+  mean=30.19 d; median=21.0 d; min=1 d; max=100 d
 
-2025-01-01..08-06: 7 emergency dates / 218 days
-2026-01-01..08-06: 10 emergency dates / 218 days
-Rate ratio 2026/2025: 1.429; approximate 95% CI 0.544–3.753; exact two-sided p=0.629
+Same-source descriptive comparison (SITE_A only; Jan 1-Aug 6):
+  2025: 7 emergency ETA-date groups
+  2026: 9 emergency ETA-date groups
+  descriptive ratio: 1.286 (+28.6%)
+  No p-value/CI is reported because notification completeness and event independence are not established.
 
-Max 3-day window: 3 emergency dates, 2026-08-04..2026-08-06: 2026-08-04, 2026-08-05, 2026-08-06
-Max 7-day window: 3 emergency dates, 2026-08-04..2026-08-10: 2026-08-04, 2026-08-05, 2026-08-06
-Max 14-day window: 3 emergency dates, 2026-01-12..2026-01-25: 2026-01-12, 2026-01-13, 2026-01-22
-Max 24-day window: 4 emergency dates, 2026-07-14..2026-08-06: 2026-07-14, 2026-08-04, 2026-08-05, 2026-08-06
-Max 30-day window: 4 emergency dates, 2026-07-14..2026-08-12: 2026-07-14, 2026-08-04, 2026-08-05, 2026-08-06
-Max 60-day window: 5 emergency dates, 2024-12-13..2025-02-10: 2024-12-13, 2024-12-31, 2025-01-17, 2025-01-19, 2025-02-07
+Cross-site emergency ETA-date overlap (2025-12-06..2026-08-06):
+  SITE_A groups: 10
+  SITE_B groups: 11
+  shared dates: 10
+  Jaccard(date sets): 0.909
+
+Explicit scheduled windows in planned notices without a cancellation signal in the same group: 9 groups, 39.0 announced hours
+  These are notice-window hours, not verified outage-duration hours.
+  The undated 2025-11 planned-work extension is not included beyond the explicit 11:00-14:00 window.
+
+SITE_B complete-window maxima for emergency restoration-ETA dates:
+   3-day window: max 3 groups, 2026-08-04..2026-08-06: 2026-08-04, 2026-08-05, 2026-08-06
+   7-day window: max 3 groups, 2026-07-31..2026-08-06: 2026-08-04, 2026-08-05, 2026-08-06
+  14-day window: max 3 groups, 2026-01-09..2026-01-22: 2026-01-12, 2026-01-13, 2026-01-22
+  24-day window: max 4 groups, 2026-07-14..2026-08-06: 2026-07-14, 2026-08-04, 2026-08-05, 2026-08-06
+  30-day window: max 4 groups, 2026-07-08..2026-08-06: 2026-07-14, 2026-08-04, 2026-08-05, 2026-08-06
+
+Interpretation: the 4-6 Aug run is three emergency notifications whose restoration ETAs fall on three consecutive dates at SITE_B. Without SMS receipt/restoration timestamps, this is not by itself proof of three distinct outage incidents.

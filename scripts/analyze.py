@@ -1,84 +1,115 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import csv, math, statistics
-from datetime import date, datetime, timedelta
-from collections import Counter
+import csv, statistics
+from datetime import date, timedelta
 
 ROOT = Path(__file__).resolve().parents[1]
-EVENTS = ROOT / "data" / "processed" / "events.csv"
+GROUPS = ROOT / "data" / "derived" / "notification_groups.csv"
 
-def load():
+def load_groups():
     rows = []
-    with EVENTS.open(encoding="utf-8") as f:
+    with GROUPS.open(encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            r["date"] = date.fromisoformat(r["date"])
+            r["anchor_date"] = date.fromisoformat(r["anchor_date"])
             rows.append(r)
     return rows
 
-def binom_two_sided(k, n, p=0.5):
-    # Exact two-sided binomial test using the "probability <= observed" definition.
-    def pmf(x):
-        return math.comb(n, x) * (p ** x) * ((1-p) ** (n-x))
-    obs = pmf(k)
-    return min(1.0, sum(pmf(x) for x in range(n+1) if pmf(x) <= obs + 1e-15))
+def site_in(row, site_id):
+    return site_id in row["evidence_sites"].split(";")
 
-def max_window(dates, days):
+def complete_window_max(dates, days, span_start, span_end):
+    """Maximum number of anchor dates in any fully observed calendar window.
+
+    Iterates over every possible calendar-day start. Windows extending beyond
+    the supplied record span are never evaluated.
+    """
+    if not dates or (span_end - span_start).days + 1 < days:
+        return None
+    date_set = set(dates)
     best = None
-    for start in dates:
-        end = start + timedelta(days=days-1)
-        selected = [d for d in dates if start <= d <= end]
-        cand = (len(selected), start, end, selected)
-        if best is None or cand[0] > best[0]:
-            best = cand
+    start = span_start
+    last_start = span_end - timedelta(days=days - 1)
+    while start <= last_start:
+        end = start + timedelta(days=days - 1)
+        selected = sorted(d for d in date_set if start <= d <= end)
+        candidate = (len(selected), start, end, selected)
+        if best is None or candidate[0] > best[0]:
+            best = candidate
+        start += timedelta(days=1)
     return best
 
-rows = load()
-start = min(r["date"] for r in rows)
-end = max(r["date"] for r in rows)
-obs_days = (end - start).days + 1
+rows = load_groups()
+all_dates = sorted(r["anchor_date"] for r in rows)
+record_start, record_end = min(all_dates), max(all_dates)
+record_span_days = (record_end - record_start).days + 1
 
-emergency = sorted(r["date"] for r in rows if r["category"] == "emergency")
-switching = sorted(r["date"] for r in rows if r["category"] == "network_switching")
-planned = [r for r in rows if r["category"] == "planned" and r["status"] != "cancelled"]
-cancelled = [r for r in rows if r["category"] == "planned" and r["status"] == "cancelled"]
+emergency = [r for r in rows if r["category"] == "emergency"]
+switching = [r for r in rows if r["category"] == "network_switching"]
+planned = [r for r in rows if r["category"] == "planned"]
 
-gaps = [(b-a).days for a,b in zip(emergency, emergency[1:])]
-emergency_rate_year = len(emergency) / obs_days * 365
-unplanned_days = len(set(emergency + switching))
-actual_or_announced = unplanned_days + len(planned)
-
-print(f"Observation: {start} to {end} inclusive = {obs_days} days")
-print(f"Emergency interruption dates (conservative): {len(emergency)}")
-print(f"Network-switching interruption dates: {len(switching)}")
-print(f"Non-cancelled planned interruption dates: {len(planned)}")
-print(f"Cancelled planned-work dates: {len(cancelled)}")
-print(f"All non-cancelled recorded/announced interruption dates: {actual_or_announced}")
-print(f"Emergency-date annualized rate: {emergency_rate_year:.2f} per 365 days")
-print(f"Emergency gaps: mean={statistics.mean(gaps):.2f} d, median={statistics.median(gaps):.1f} d, min={min(gaps)} d, max={max(gaps)} d")
+print(f"Source-record anchor span: {record_start} to {record_end} inclusive = {record_span_days} calendar days")
+print("IMPORTANT: this is a retrospective transcript span, not a proven complete observation window.")
+print(f"Emergency notification groups keyed by restoration-ETA date: {len(emergency)}")
+print(f"Network-switching notification groups keyed by restoration-ETA date: {len(switching)}")
+print(f"Planned-work notification groups keyed by scheduled date: {len(planned)}")
 print()
 
-planned_hours = sum(float(r["announced_window_hours"]) for r in planned)
-print(f"Non-cancelled announced planned windows: {planned_hours:.1f} h total; mean={planned_hours/len(planned):.2f} h/event")
-print(f"Cancelled announced windows: {sum(float(r['announced_window_hours']) for r in cancelled):.1f} h")
+# Emergency ETA-date gap summaries are descriptive only.
+em_dates = sorted(r["anchor_date"] for r in emergency)
+gaps = [(b-a).days for a,b in zip(em_dates, em_dates[1:])]
+print("Emergency ETA-date gaps (descriptive; not verified outage inter-arrival times):")
+print(f"  mean={statistics.mean(gaps):.2f} d; median={statistics.median(gaps):.1f} d; min={min(gaps)} d; max={max(gaps)} d")
 print()
 
-# Same-period year-over-year: Jan 1 through Aug 6
-def ytd_count(year):
-    s = date(year,1,1)
-    e = date(year,8,6)
-    return sum(s <= d <= e for d in emergency), (e-s).days+1
+# Comparable same-source year-over-year descriptive comparison: SITE_A only.
+def site_a_ytd(year):
+    s, e = date(year,1,1), date(year,8,6)
+    selected = [r for r in emergency if site_in(r, "SITE_A") and s <= r["anchor_date"] <= e]
+    return len(selected)
 
-n25, e25 = ytd_count(2025)
-n26, e26 = ytd_count(2026)
-rr = (n26/e26)/(n25/e25)
-se = math.sqrt(1/n26 + 1/n25)
-lo, hi = math.exp(math.log(rr)-1.96*se), math.exp(math.log(rr)+1.96*se)
-pval = binom_two_sided(n26, n25+n26, 0.5)  # equal exposure
-print(f"2025-01-01..08-06: {n25} emergency dates / {e25} days")
-print(f"2026-01-01..08-06: {n26} emergency dates / {e26} days")
-print(f"Rate ratio 2026/2025: {rr:.3f}; approximate 95% CI {lo:.3f}–{hi:.3f}; exact two-sided p={pval:.3f}")
+n25 = site_a_ytd(2025)
+n26 = site_a_ytd(2026)
+print("Same-source descriptive comparison (SITE_A only; Jan 1-Aug 6):")
+print(f"  2025: {n25} emergency ETA-date groups")
+print(f"  2026: {n26} emergency ETA-date groups")
+if n25:
+    print(f"  descriptive ratio: {n26/n25:.3f} ({(n26/n25-1)*100:+.1f}%)")
+print("  No p-value/CI is reported because notification completeness and event independence are not established.")
 print()
 
-for w in (3, 7, 14, 24, 30, 60):
-    c, s, e, sel = max_window(emergency, w)
-    print(f"Max {w}-day window: {c} emergency dates, {s}..{e}: " + ", ".join(str(x) for x in sel))
+# Cross-site corroboration in the emergency overlap.
+a = {r["anchor_date"]: r for r in emergency if site_in(r, "SITE_A")}
+b = {r["anchor_date"]: r for r in emergency if site_in(r, "SITE_B")}
+overlap_start = date(2025,12,6)
+overlap_end = record_end
+a_overlap = {d for d in a if overlap_start <= d <= overlap_end}
+b_overlap = {d for d in b if overlap_start <= d <= overlap_end}
+shared = a_overlap & b_overlap
+union = a_overlap | b_overlap
+print(f"Cross-site emergency ETA-date overlap ({overlap_start}..{overlap_end}):")
+print(f"  SITE_A groups: {len(a_overlap)}")
+print(f"  SITE_B groups: {len(b_overlap)}")
+print(f"  shared dates: {len(shared)}")
+print(f"  Jaccard(date sets): {len(shared)/len(union):.3f}" if union else "  Jaccard: n/a")
+print()
+
+# Planned windows: explicit non-cancelled notices only; do not infer actual downtime.
+explicit_planned = [r for r in planned if r["status"] in {"announced","announced_with_possible_undated_update"}]
+hours = sum(float(r["scheduled_window_hours_explicit"]) for r in explicit_planned if r["scheduled_window_hours_explicit"])
+print(f"Explicit scheduled windows in planned notices without a cancellation signal in the same group: {len(explicit_planned)} groups, {hours:.1f} announced hours")
+print("  These are notice-window hours, not verified outage-duration hours.")
+print("  The undated 2025-11 planned-work extension is not included beyond the explicit 11:00-14:00 window.")
+print()
+
+# Cluster windows: use SITE_B because the 4/5/6 Aug run occurs at one service point,
+# and require fully contained windows.
+site_b_em = sorted(r["anchor_date"] for r in emergency if site_in(r, "SITE_B"))
+site_b_start, site_b_end = min(site_b_em), max(site_b_em)
+print("SITE_B complete-window maxima for emergency restoration-ETA dates:")
+for w in (3,7,14,24,30):
+    result = complete_window_max(site_b_em, w, site_b_start, site_b_end)
+    if result:
+        count, s, e, selected = result
+        print(f"  {w:2d}-day window: max {count} groups, {s}..{e}: " + ", ".join(map(str, selected)))
+print()
+print("Interpretation: the 4-6 Aug run is three emergency notifications whose restoration ETAs fall on three consecutive dates at SITE_B. Without SMS receipt/restoration timestamps, this is not by itself proof of three distinct outage incidents.")

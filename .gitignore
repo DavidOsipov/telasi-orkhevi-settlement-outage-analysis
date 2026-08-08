@@ -1,0 +1,11 @@
+# Private mappings / personal evidence
+private/
+*.local.csv
+*.local.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated figures
+reports/figures/

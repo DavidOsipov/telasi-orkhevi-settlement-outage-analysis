@@ -1,0 +1,3 @@
+site_id,role,public_geography,first_supplied_anchor_date,last_supplied_anchor_date,notes
+SITE_A,corroborating_longitudinal_series,location_not_asserted_publicly,2024-11-10,2026-08-06,Neighbor-supplied service point. The resident warned that she receives SMS for more than one property; the supplied transcript contains only one subscriber pseudonym. Its exact location should be privately confirmed before treating the pre-overlap history as Orkhevi-specific.
+SITE_B,primary_orkhevi_series,"Orkhevi Settlement, Samgori District, Tbilisi",2025-11-12,2026-08-06,Primary service point associated with the Orkhevi analysis. Exact address and subscriber number are intentionally not public.

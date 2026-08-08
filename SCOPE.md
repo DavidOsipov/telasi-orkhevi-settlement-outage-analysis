@@ -2,57 +2,44 @@
 
 ## Geographic scope
 
-This repository concerns electricity interruption evidence collected from two correlated Telasi service points in **Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
+The repository is centered on **Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
 
 Canonical place identifier:
 
 - Wikidata: `Q130437988`
-- Place: Orkhevi Settlement, Tbilisi, Georgia
 
-## Evidentiary scope
+`SITE_B` is the primary service point associated with the Orkhevi analysis.
 
-The repository contains resident-supplied Telasi SMS notifications and a conservative normalization of those messages into event-level records.
+`SITE_A` is a neighbor-supplied corroborating longitudinal series. The neighbor explicitly warned that she receives Telasi SMS for more than one property in different places. The supplied transcript contains one pseudonymized subscriber number, and its exact property/location mapping is not published in this repository.
 
-The evidence supports the conclusion that the two observed service points frequently experienced the same upstream distribution events: in the overlapping record, shared emergency events have matching estimated restoration times to the minute.
+Therefore, before using SITE_A's pre-overlap history as evidence specifically about Orkhevi, the private mapping of that subscriber number to the Orkhevi property should be confirmed.
 
-This does **not** establish the exact physical topology of the distribution network. In particular, the public evidence does not prove that the two service points are connected to:
+## What the public evidence supports
 
-- the same low-voltage feeder;
-- the same transformer;
-- the same medium-voltage feeder; or
-- any specifically identified Telasi substation.
+The supplied records show repeated electricity-interruption notifications affecting the primary Orkhevi service point and a strongly correlated second service point during the overlap period.
 
-Those questions require Telasi network records.
+The overlap is consistent with the two points repeatedly being included in the same affected network scope. The public dataset does not prove the exact network topology.
 
 ## Settlement-wide claims
 
-The dataset must not be interpreted as proof that every recorded interruption affected all of Orkhevi Settlement.
+The repository does not claim that every local notification affected all of Orkhevi Settlement.
 
-The defensible claim is narrower:
+A defensible public formulation is:
 
-> The supplied SMS records document repeated electricity interruptions affecting at least two correlated Telasi service points in Orkhevi Settlement, with a longitudinal record extending from November 2024 through August 2026.
-
-Where external sources document wider Tbilisi-wide or nationwide grid events, those events are stored separately as contextual evidence and are not automatically counted as local Orkhevi interruption events.
+> The dataset documents repeated Telasi electricity-interruption notifications at an Orkhevi service point, corroborated across much of the overlapping period by a second strongly correlated service point.
 
 ## Time scope
 
-Current observation window:
+The combined source-record anchor span is:
 
-**2024-11-10 through 2026-08-06**, inclusive.
+**2024-11-10 through 2026-08-06**.
 
-The observation window may be extended when additional historical SMS records or independently verifiable outage evidence become available.
+This is a span of supplied notification dates/ETA dates. It is not asserted to be a complete continuous observation period.
 
-## Known limitations
+The primary SITE_B supplied record begins later than SITE_A. This difference in source coverage must be respected in time comparisons.
 
-The source SMS messages generally provide an estimated restoration time, not:
+## External grid context
 
-- a verified interruption start timestamp;
-- an actual restoration timestamp;
-- affected-customer counts;
-- feeder or transformer identifiers;
-- an authoritative cause code;
-- complete coverage of all interruptions.
+Nationwide transmission-system events are stored separately in `data/external_context.csv`.
 
-Some outages occurred without an SMS. Event counts derived from this repository should therefore be treated as a **lower-bound observational record**.
-
-Official reliability indicators such as SAIDI, SAIFI, CAIDI, or MTTR cannot be calculated reliably from this dataset alone.
+They are contextual events, not local Telasi notification groups, and are not automatically treated as causes of local Orkhevi notifications.

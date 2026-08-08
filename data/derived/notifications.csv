@@ -1,0 +1,57 @@
+message_id,site_id,source_file,source_line_start,source_line_end,message_kind,anchor_date,anchor_date_kind,eta_time,scheduled_start_text,scheduled_end_text,text_sha256
+SITE_A-001,SITE_A,site_a_sms_redacted.txt,1,3,emergency,2026-08-06,restoration_eta_date,17:40,,,b7737a0638dcb9941352b487f4e9583006453b63b21f33365d4648189779f98c
+SITE_A-002,SITE_A,site_a_sms_redacted.txt,4,6,emergency,2026-08-05,restoration_eta_date,12:54,,,8f005e1f96f9641ad7d2a4a30e5699ab0d3978e984ec80991ee4d8d50876d2ae
+SITE_A-003,SITE_A,site_a_sms_redacted.txt,7,9,emergency,2026-07-14,restoration_eta_date,15:19,,,7ac07c89b70e04e78af8e3e82a4042ce1d6fa56682c6a05c37e56b87915433d2
+SITE_A-004,SITE_A,site_a_sms_redacted.txt,10,12,emergency,2026-05-13,restoration_eta_date,13:39,,,e5fccd4543b1a33a88efa0ae5bc187e1dcf208b16a906ea5fc0f2fdcea764313
+SITE_A-005,SITE_A,site_a_sms_redacted.txt,13,15,emergency,2026-04-07,restoration_eta_date,22:29,,,01f1e2ded4a0904f9f446fc99176a4d572cccfcebb0cd6f1a18a6eecaacea462
+SITE_A-006,SITE_A,site_a_sms_redacted.txt,16,18,emergency,2026-04-07,restoration_eta_date,22:29,,,01f1e2ded4a0904f9f446fc99176a4d572cccfcebb0cd6f1a18a6eecaacea462
+SITE_A-007,SITE_A,site_a_sms_redacted.txt,19,21,emergency,2026-04-07,restoration_eta_date,19:33,,,e9200e965bb2c26b166f7b71c26d1a1599d8a472ee19b1a1816ba9f995a12b94
+SITE_A-008,SITE_A,site_a_sms_redacted.txt,22,24,emergency,2026-03-14,restoration_eta_date,00:22,,,15fadd1e2caf4991dd7d352894285d19c22ab71dc554995024ef374c79716b7a
+SITE_A-009,SITE_A,site_a_sms_redacted.txt,25,27,planned_notice,2026-03-12,scheduled_interruption_date,,11:00,18:00,af410fe9861a900ff8a6e86f3aec5c164c92bdfe07819f6f7a82e15d754c89dd
+SITE_A-010,SITE_A,site_a_sms_redacted.txt,28,30,emergency,2026-01-22,restoration_eta_date,20:00,,,63ec5560c95e9ddc22125e885486888ee6c3e52467f8e61e7d23bd04eb22c693
+SITE_A-011,SITE_A,site_a_sms_redacted.txt,31,33,emergency,2026-01-22,restoration_eta_date,12:00,,,ea1605952b174e965d2c0ac6e6d2081d4160172941a198bde1543b3f30a334a4
+SITE_A-012,SITE_A,site_a_sms_redacted.txt,34,36,emergency,2026-01-13,restoration_eta_date,16:50,,,ce26aded77c7221c25f7c72e028e338465dc8fa1bd94cbaca42182ddc5624566
+SITE_A-013,SITE_A,site_a_sms_redacted.txt,37,39,emergency,2026-01-12,restoration_eta_date,18:43,,,4004ede96b415f74185915bfeff8aad0ddf8a558a47bd608ef2e133316b0cf37
+SITE_A-014,SITE_A,site_a_sms_redacted.txt,40,42,emergency,2025-12-06,restoration_eta_date,17:11,,,c5588de3cea9ad4c9eee50d7200b4d583a2819d888479ea936b016d9a53c3ef0
+SITE_A-015,SITE_A,site_a_sms_redacted.txt,43,45,planned_notice,2025-12-01,scheduled_interruption_date,,11:00,16:00,585bd7a2a4822f27fe68e0a5dea5beb965bfe3708b96407973e96b6f9763c0ac
+SITE_A-016,SITE_A,site_a_sms_redacted.txt,46,48,planned_notice,2025-11-28,scheduled_interruption_date,,11:00,18:00,2a111382616fb29fabebde77a8d64f4e75a3e85ed3a078655a7d3784b2d5f35c
+SITE_A-017,SITE_A,site_a_sms_redacted.txt,49,51,planned_notice,2025-11-12,scheduled_interruption_date,,11:00,18:00,8e7dfff094197025b687b81f094033b5c6fe93535942e01d015b838904612f4f
+SITE_A-018,SITE_A,site_a_sms_redacted.txt,52,54,emergency,2025-11-05,restoration_eta_date,14:22,,,2bd9c2a528314a48d8fc44524b8908b7bbcacf2b20c84a184b546c3d9b1a48cf
+SITE_A-019,SITE_A,site_a_sms_redacted.txt,55,57,planned_update,,,,,,dbdfd03da18653413bd952d611b0decf3d14612a54fc6bb90baf7cbbbb78efdb
+SITE_A-020,SITE_A,site_a_sms_redacted.txt,58,60,planned_notice,2025-11-02,scheduled_interruption_date,,11:00,14:00,eca395e3086ea25efca06f4c9365d2ff70e4d3a1d3cb8bdef0cb18b995581c20
+SITE_A-021,SITE_A,site_a_sms_redacted.txt,61,63,planned_notice,2025-10-15,scheduled_interruption_date,,11:00,17:00,48db25b8241629355fcbb721ce16529f2d4408d8a16e50d0132026d5789ac19f
+SITE_A-022,SITE_A,site_a_sms_redacted.txt,64,66,planned_notice,2025-10-13,scheduled_interruption_date,,11:00,15:00,abddde7bb8e09d5e6db689fc4022b92473cbc927cf339541cf78c47627eb245c
+SITE_A-023,SITE_A,site_a_sms_redacted.txt,67,69,planned_cancellation,2025-10-09,scheduled_interruption_date,,10:00:00 AM,06:00:00 PM,0c411dbceb888cd3dddff296a77de74f8e3943232491b0d6316ecbef05793354
+SITE_A-024,SITE_A,site_a_sms_redacted.txt,70,72,emergency,2025-07-28,restoration_eta_date,00:16,,,7a0b143c7d906ec0b9c6dbbc5ce6776eceb763e300ecef7289e28afd895f6a6d
+SITE_A-025,SITE_A,site_a_sms_redacted.txt,73,75,emergency,2025-07-08,restoration_eta_date,15:44,,,04f40a642a30065f097d7e699812250786a4bd9c5d123ea16f8a9ad477e2375d
+SITE_A-026,SITE_A,site_a_sms_redacted.txt,76,78,emergency,2025-06-28,restoration_eta_date,17:43,,,80e4e90a9bbe7417860cd08252d4aff221417b5b79cae7be2a6214a1fbc0f82c
+SITE_A-027,SITE_A,site_a_sms_redacted.txt,79,81,emergency,2025-06-28,restoration_eta_date,01:18,,,607a871c1297b5b206bd50ba6c740e390cc616d08c10b69b7746778a1545e406
+SITE_A-028,SITE_A,site_a_sms_redacted.txt,82,84,emergency,2025-04-22,restoration_eta_date,19:13,,,02831992b7ef0e101840c78328a9d3ad4bbe6c9d5dc377461058e606ad5fbdfe
+SITE_A-029,SITE_A,site_a_sms_redacted.txt,85,87,planned_notice,2025-03-14,scheduled_interruption_date,,11:00,14:00,e9081bc8e71a5db4372694256074157dbedef5b9d8eeb8f8ac1433faf7d0a977
+SITE_A-030,SITE_A,site_a_sms_redacted.txt,88,90,planned_notice,2025-02-20,scheduled_interruption_date,,11:00,14:00,8abca6c196a1467f98dbae5163390b365aa1950f8ce129922133660a7db5bda6
+SITE_A-031,SITE_A,site_a_sms_redacted.txt,91,93,emergency,2025-02-07,restoration_eta_date,18:27,,,d261267c35ab54707effb4b4dd7e84e173d68f76b47aefb953843011e22e0e6f
+SITE_A-032,SITE_A,site_a_sms_redacted.txt,94,96,emergency,2025-01-19,restoration_eta_date,23:22,,,a33f9f6c29be53d3c72c89252aadad3b958e70d09b5afe12d3c7d74cd579cc74
+SITE_A-033,SITE_A,site_a_sms_redacted.txt,97,99,emergency,2025-01-17,restoration_eta_date,19:22,,,17caa5d28a32e4d67f4147295d43f138b56aa82161e7158cdfa5b0457bed652f
+SITE_A-034,SITE_A,site_a_sms_redacted.txt,100,102,emergency,2024-12-31,restoration_eta_date,11:02,,,34b7fdc5b27a45fddb7843f567d738b470ed64cca1abce8c6fe9b26a8d21cad8
+SITE_A-035,SITE_A,site_a_sms_redacted.txt,103,105,emergency,2024-12-13,restoration_eta_date,16:14,,,dcafc4b596dce765b5c20586f5acc93172fd94e0d9dc78cf421aa88df938070d
+SITE_A-036,SITE_A,site_a_sms_redacted.txt,106,108,planned_notice,2024-12-02,scheduled_interruption_date,,10:00,11:00,ee28a95f96972ed58cefb2b7d93697b90827930a74325789adef9aa2d3b70f57
+SITE_A-037,SITE_A,site_a_sms_redacted.txt,109,111,network_switching,2024-11-11,restoration_eta_date,19:42,,,c4b4d098bc1ea076ef4dae0ac27328af222ab848f6af75ce515bc017caa3882a
+SITE_A-038,SITE_A,site_a_sms_redacted.txt,112,114,emergency,2024-11-10,restoration_eta_date,17:53,,,2602d233ca8784e44742dd984c89caa1fd5291e7e230612167d8e2585b7721c6
+SITE_B-001,SITE_B,site_b_sms_redacted.txt,1,1,planned_notice,2025-11-12,scheduled_interruption_date,,11:00:00 AM,06:00:00 PM,f3019c3efc8b55688795d0a21eabcfce377c46b7e0da616380cf5c59aca218c5
+SITE_B-002,SITE_B,site_b_sms_redacted.txt,2,2,planned_notice,2025-11-28,scheduled_interruption_date,,11:00:00 AM,06:00:00 PM,ac0d74ad2711943c8312e0379066e3ee52edbf4b8e9146362a5bd0186b9b8fd0
+SITE_B-003,SITE_B,site_b_sms_redacted.txt,3,4,planned_cancellation,2025-11-28,scheduled_interruption_date,,,,8793a29e3a8737c6146c1a60a697399519114d82a0ed6e01411701ca735f5350
+SITE_B-004,SITE_B,site_b_sms_redacted.txt,5,5,planned_notice,2025-12-01,scheduled_interruption_date,,11:00:00 AM,04:00:00 PM,0434ca4de80e5240bd666e02edb2bd18e2f72f02b9f7b84afeeac4e9f3b61ee2
+SITE_B-005,SITE_B,site_b_sms_redacted.txt,6,7,emergency,2025-12-06,restoration_eta_date,17:11,,,6dd7ced1a1cf33a02a485d6371f4a35735ded8077e8dcf9c74ca1cda148b2877
+SITE_B-006,SITE_B,site_b_sms_redacted.txt,8,9,emergency,2026-01-12,restoration_eta_date,18:43,,,ec82cf18525c1be9aad9b5291bef9d50b0a776405ff2c0482f90055b7ca23143
+SITE_B-007,SITE_B,site_b_sms_redacted.txt,10,11,emergency,2026-01-13,restoration_eta_date,16:50,,,8108dc76f1185c3db74065b1b498025a60ee8c6110b1fb123eeddb19ea33a498
+SITE_B-008,SITE_B,site_b_sms_redacted.txt,12,13,emergency,2026-01-22,restoration_eta_date,12:00,,,f627c8d50a7d42894bf5a640bfc20b461e7ca58850c38d56a3384389db78b61e
+SITE_B-009,SITE_B,site_b_sms_redacted.txt,14,15,emergency,2026-01-22,restoration_eta_date,20:00,,,c6171f45424f31fbce667adbe1634e3ffb36e05cb52378f67661a2b9597766ce
+SITE_B-010,SITE_B,site_b_sms_redacted.txt,16,16,planned_notice,2026-03-12,scheduled_interruption_date,,11:00:00 AM,06:00:00 PM,86a0b792c3fd2299123c9d11dd914f56a0dcf3cfd6db700c27463a2e945bd447
+SITE_B-011,SITE_B,site_b_sms_redacted.txt,17,18,emergency,2026-03-14,restoration_eta_date,00:22,,,110a60b75fa76a9f3c3cccc9f03b9cd5e62a7b6360ee04fa8ab3c98d1cf6429c
+SITE_B-012,SITE_B,site_b_sms_redacted.txt,19,20,emergency,2026-04-07,restoration_eta_date,22:29,,,4146c662b3aa29f5cf3534438eee8c7b3d1927a70655d00597244c7d4b15a359
+SITE_B-013,SITE_B,site_b_sms_redacted.txt,21,22,emergency,2026-04-07,restoration_eta_date,19:33,,,1b0d7a83ff15a05210159c9cebd6c634db8c8fa65e138f5278902bb6f72fbeac
+SITE_B-014,SITE_B,site_b_sms_redacted.txt,23,24,emergency,2026-05-13,restoration_eta_date,13:39,,,8a1945419c788c795c55dce828a5760b9f3e86e514b57d4e05f83e29a499b613
+SITE_B-015,SITE_B,site_b_sms_redacted.txt,25,26,emergency,2026-07-14,restoration_eta_date,15:19,,,88d41c882f81ba63d011940646682d19b73a2c5d06bf43dfbcfae38620cd5b0d
+SITE_B-016,SITE_B,site_b_sms_redacted.txt,27,28,emergency,2026-08-04,restoration_eta_date,14:32,,,a624fb3504585d10dff5b1732f4d23c7a7a8efe29b0391b8a523f8a930a21f15
+SITE_B-017,SITE_B,site_b_sms_redacted.txt,29,30,emergency,2026-08-05,restoration_eta_date,12:54,,,4e90d815f73badc45820302442ecc93ad0f25fc63ee4dea3466d7d14cc965475
+SITE_B-018,SITE_B,site_b_sms_redacted.txt,31,32,emergency,2026-08-06,restoration_eta_date,17:40,,,e8b5130a668af12ba146ff4e04a9e24b4eba5edc0d51f1698b0ec80821de1b4b

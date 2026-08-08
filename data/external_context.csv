@@ -1,0 +1,4 @@
+date,approx_time,event_type,scope,source_type,note,source_url
+2026-07-24,~00:10,nationwide_blackout,Georgia,secondary_media_reporting,Civil Georgia reported country-wide loss of supply; article quotes GSE saying electricity supply was cut across the country and cause was under investigation.,https://civil.ge/archives/745616
+2026-07-25,~08:00,nationwide_blackout,Georgia,secondary_media_reporting,Civil Georgia reported a second nationwide outage; as of July 25 Georgian authorities had not publicly identified the cause.,https://civil.ge/archives/745851
+2026-08-05,~20:10,nationwide_blackout,Georgia,secondary_media_reporting,Civil Georgia reported a third nationwide blackout; reporting says it occurred during planned GSE testing at Enguri HPP and quotes/links a GSE statement.,https://civil.ge/archives/746962
