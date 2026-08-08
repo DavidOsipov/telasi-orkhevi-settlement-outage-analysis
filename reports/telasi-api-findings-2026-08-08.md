@@ -59,6 +59,11 @@ This is an archive of public website publications, not an authoritative internal
 outage-event ledger. The archive currently exposed through this query does not
 cover the earlier 2024–mid-2025 portion of the resident SMS record.
 
+The number 889 is a count of **publications**, not physical outage incidents.
+Multiple publications can refer to related events, duplicates can exist, and a
+single subscriber-level interruption may have no corresponding public
+publication at all.
+
 ## Search for Orkhevi
 
 Searching for the Georgian substring `ორხევ` returned **17 publications**:
