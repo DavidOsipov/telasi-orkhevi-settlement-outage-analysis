@@ -4,6 +4,9 @@
 The raw response is preserved byte-for-byte. Published decimal strings are also
 preserved verbatim; any fraction emitted by this tool is only the exact rational
 representation of the displayed API string, not an unrounded survey estimate.
+
+WBES "typical month" is preserved as a survey concept and is not silently
+reinterpreted as an arithmetic mean Gregorian calendar month.
 """
 
 from __future__ import annotations
@@ -20,6 +23,8 @@ DEFAULT_URL = (
     "https://extdataportal.worldbank.org/api/esapi/"
     "GetEconomyCutsData/economyid/74/year/2023/topicid/8/cutsid/3/?lang=en"
 )
+SOURCE_TOPIC_PAGE = "https://www.enterprisesurveys.org/en/data/exploretopics/infrastructure-and-climate"
+SOURCE_MICRODATA_C7 = "https://microdata.worldbank.org/catalog/6443/variable/F1/V57?name=c7"
 DEFAULT_OUTPUT_DIR = Path("artifacts/wbes/tbilisi-2023")
 
 WANTED_FIELDS = {
@@ -29,6 +34,13 @@ WANTED_FIELDS = {
     "in12": "Percent of firms identifying electricity as a major or very severe constraint",
     "bready_in9": "[B-READY] Percent of firms owning or sharing a generator",
 }
+
+TYPICAL_MONTH_NOTE = (
+    "WBES 'typical month' is a survey concept for the most common type of month regarding outages, "
+    "not an arithmetic mean Gregorian calendar month. The published typical-month value cannot be "
+    "exactly converted to 'one outage every N days' and is not definition-identical to the SITE_B "
+    "inter-arrival metric."
+)
 
 
 def exact_fraction_from_display(text: str) -> dict:
@@ -115,6 +127,8 @@ def normalize(raw: bytes, source_url: str, fetched_at: str) -> dict:
         "cut": "Location",
         "subcut": "Tbilisi",
         "source_endpoint": source_url,
+        "source_topic_page": SOURCE_TOPIC_PAGE,
+        "source_microdata_variable_c7": SOURCE_MICRODATA_C7,
         "fetched_at_utc": fetched_at,
         "raw_response_bytes": len(raw),
         "raw_response_sha256": hashlib.sha256(raw).hexdigest(),
@@ -124,6 +138,7 @@ def normalize(raw: bytes, source_url: str, fetched_at: str) -> dict:
             "The rational forms in this file exactly represent those returned decimal strings; "
             "they do not recover hidden unrounded weighted survey estimates."
         ),
+        "typical_month_semantics_note": TYPICAL_MONTH_NOTE,
         "indicators": indicators,
     }
 
@@ -152,10 +167,13 @@ def main() -> int:
     )
     metadata = {
         "source_endpoint": args.url,
+        "source_topic_page": SOURCE_TOPIC_PAGE,
+        "source_microdata_variable_c7": SOURCE_MICRODATA_C7,
         "fetched_at_utc": fetched_at,
         **http_metadata,
         "raw_response_bytes": len(raw),
         "raw_response_sha256": normalized["raw_response_sha256"],
+        "typical_month_semantics_note": TYPICAL_MONTH_NOTE,
         "raw_file": raw_path.name,
         "normalized_file": normalized_path.name,
     }
@@ -174,6 +192,7 @@ def main() -> int:
             f"{field}: {item['published_value']} "
             f"(exact fraction from displayed value: {item['exact_fraction_from_display']})"
         )
+    print("WBES typical-month values are not converted to a fixed day interval.")
     print(f"Wrote {raw_path}")
     print(f"Wrote {normalized_path}")
     print(f"Wrote {metadata_path}")
