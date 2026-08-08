@@ -28,6 +28,60 @@ jobs:
           cat artifacts/telasi_api/fetch_metadata.json
           cat artifacts/telasi_api/records.csv
 
+      - name: Probe exact list and detail payloads
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          from urllib.request import Request, urlopen
+
+          out = Path("artifacts/telasi_api")
+          out.mkdir(parents=True, exist_ok=True)
+
+          def post(url, payload):
+              body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+              req = Request(url, data=body, method="POST", headers={
+                  "Accept": "application/json",
+                  "Content-Type": "application/json; charset=utf-8",
+                  "User-Agent": "telasi-orkhevi-settlement-outage-analysis/1.0",
+              })
+              with urlopen(req, timeout=30) as response:
+                  raw = response.read()
+                  return response.status, json.loads(raw.decode("utf-8")), raw
+
+          list_url = "https://app.telasi.ge/api/view/telasi/getPoweroutages"
+          list_payload = {
+              "searchText": "",
+              "pageNumber": 1,
+              "perPage": 12,
+              "selectedlan": "ka",
+              "taxonomy": {"content_poweroutage": [2769, 2770]},
+          }
+          status, data, raw = post(list_url, list_payload)
+          (out / "list-exact-page1.json").write_bytes(raw)
+          print("LIST_STATUS", status)
+          print("LIST_TOP_KEYS", list(data.keys()) if isinstance(data, dict) else type(data).__name__)
+          api = data.get("api", {}) if isinstance(data, dict) else {}
+          print("LIST_COUNT", api.get("listCount"))
+          items = api.get("list", []) if isinstance(api, dict) else []
+          print("LIST_ITEMS", len(items) if isinstance(items, list) else type(items).__name__)
+          if isinstance(items, list):
+              for i, item in enumerate(items[:12], 1):
+                  if isinstance(item, dict):
+                      print("ITEM", i, json.dumps({k: item.get(k) for k in ["id","code","full_title","title","teaser","editor","outage_time","poweron_time","users_count","created_at","updated_at","slug","url"]}, ensure_ascii=False))
+                      blob = json.dumps(item, ensure_ascii=False)
+                      if "ორხევ" in blob:
+                          print("ORKHEVI_MATCH_PAGE1", i, blob)
+
+          detail_url = "https://www.telasi.ge/api/getMtData"
+          detail_payload = {"url": "/company-news/power-outage?content=5584", "lang": "ka"}
+          dstatus, ddata, draw = post(detail_url, detail_payload)
+          (out / "detail-content-5584.json").write_bytes(draw)
+          print("DETAIL_STATUS", dstatus)
+          print("DETAIL_TOP_KEYS", list(ddata.keys()) if isinstance(ddata, dict) else type(ddata).__name__)
+          print("DETAIL_PREVIEW", json.dumps(ddata, ensure_ascii=False)[:12000])
+          PY
+
       - name: Inspect exact outage API code in Telasi frontend
         run: |
           python - <<'PY'
@@ -42,9 +96,10 @@ jobs:
           needles = [
               "getPoweroutages",
               "telasi/getPoweroutages",
-              'contentType:"poweroutage"',
-              "contentType:'poweroutage'",
+              'contentType:\"poweroutage\"',
               "poweroutage_address",
+              "content_poweroutage",
+              "getMtData",
           ]
           lines = [f"page={page_url}", f"scripts={len(scripts)}"]
           for url in scripts:
