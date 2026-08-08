@@ -47,21 +47,11 @@ The search results were in:
 
 The parallel `api.listCount` was `0` and `api.list` was empty.
 
-The captured Orkhevi response contains `content.listCount = 17` and 17 publication objects.
+The captured Orkhevi response contains `content.listCount = 17` and 17 publication objects: 13 rows with taxonomy `2770` and 4 with taxonomy `2769`.
 
-Each `content.list[]` object can contain fields including:
+Each `content.list[]` object can contain fields including `id`, timestamps, `status`, `content_type`, `taxonomy`, `slug`, `title`, `teaser`, and `editor`. The `editor` field already contains the full publication HTML.
 
-- `id`
-- `date`, `created_at`, `updated_at`
-- `status`
-- `content_type`
-- `taxonomy`
-- `slug`
-- `title`
-- `teaser`
-- `editor` — the full publication HTML
-
-Because the full publication body is already in `editor`, a second detail API is not required to obtain the outage-publication text for these search results.
+Because the publication body is already in `editor`, a second detail API is not required to obtain the outage-publication text for these search results.
 
 ## 3. Separate paginated-list payload
 
@@ -93,8 +83,6 @@ Example observed payload:
 
 Our 2026-08-08 probe returned page/Nuxt metadata (`placeFillers`, `htmlTag`, `urlParts`, `headerObjects`) including SEO/canonical information. It did **not** return the outage publication body. The body for content ID 5584 was already present in `getPoweroutages` → `content.list[].editor`.
 
-A raw response from this probe is preserved in this directory's dated snapshot.
-
 ## 5. Observed taxonomy semantics
 
 In the 2026-08-08 Orkhevi search result:
@@ -102,22 +90,13 @@ In the 2026-08-08 Orkhevi search result:
 - taxonomy ID `2769` occurs on publications that appear to be planned/scheduled-work notices;
 - taxonomy ID `2770` occurs on publications that appear to be unplanned interruption notices.
 
-The repository labels these empirically as `planned_or_scheduled` and `unplanned`.
-
-This is an observed mapping, **not an official Telasi taxonomy specification**, unless/until such documentation is found.
+The repository labels these empirically as `planned_or_scheduled` and `unplanned`. This is an observed mapping, **not an official Telasi taxonomy specification**, unless/until such documentation is found.
 
 ## 6. Geographic caution
 
-Searching `ორხევი` is a text search, not an electrical-topology query.
+Searching `ორხევი` is a text search, not an electrical-topology query. Hits can refer to Orkhevi Settlement, the industrial zone, an Orkhevi-named exit/road, streets, or other associated locations.
 
-Hits may mention:
-
-- `ორხევის დასახლება` — Orkhevi Settlement;
-- the Orkhevi industrial zone;
-- an Orkhevi-named exit/road;
-- streets or other locations described as associated with Orkhevi.
-
-Therefore `17 search hits` must not be restated as `17 outages of the user's service point` or even automatically as `17 outages of the settlement`.
+Therefore `17 search hits` must not be restated as `17 outages of the user's service point` or automatically as `17 outages of the settlement`.
 
 ## 7. Time semantics
 
@@ -138,35 +117,38 @@ python scripts/fetch_telasi_api.py --search-text "ორხევი" --output-d
 Normalize an already captured JSON file without network access:
 
 ```bash
-python scripts/fetch_telasi_api.py \
-  --input-json response.json \
-  --output-dir artifacts/telasi_api
+python scripts/fetch_telasi_api.py --input-json response.json --output-dir artifacts/telasi_api
 ```
 
-Use paginated-list request shape:
+Use the paginated-list request shape:
 
 ```bash
-python scripts/fetch_telasi_api.py \
-  --list-mode \
-  --page-number 1 \
-  --per-page 12 \
-  --output-dir artifacts/telasi_api
+python scripts/fetch_telasi_api.py --list-mode --page-number 1 --per-page 12 --output-dir artifacts/telasi_api
 ```
 
-The script writes the raw response unchanged as `response.json`, a SHA-256-bearing metadata file, and a normalized CSV.
+The script writes the response bytes unchanged as `response.json`, plus SHA-256-bearing metadata and normalized CSV output.
 
 ## 9. Preserved snapshot — 2026-08-08
 
-See `raw/2026-08-08/`.
+See `raw/2026-08-08/` and its `MANIFEST.json`.
 
-The large Orkhevi search response is stored as a deterministic gzip stream encoded as Base64 so it can be committed through text-only tooling while retaining byte-for-byte recoverability of the original JSON.
+The 295,834-byte Orkhevi search JSON was deterministically gzip-compressed, Base64-encoded and split into eight text chunks because the repository write channel used for this snapshot was text-only. Each committed chunk's Git blob SHA-1 was checked against the locally calculated expected blob SHA before finalizing the manifest.
 
-Decode it with:
+Reconstruct on Linux/macOS:
 
 ```bash
-base64 -d data/telasi_api/raw/2026-08-08/getPoweroutages-search-orkhevi.response.json.gz.b64 \
+cat data/telasi_api/raw/2026-08-08/getPoweroutages-search-orkhevi.response.json.gz.part-*.b64 \
+  | base64 -d \
   | gzip -d \
   > response.json
+
+sha256sum response.json
 ```
 
-Then verify the SHA-256 listed in `MANIFEST.json`.
+Expected SHA-256:
+
+```text
+99e9f1a1331b97300bc1984304c2d71db8acd46fbf543a8ff0e45d3eecf0cb89
+```
+
+A raw `getMtData` response for content ID 5584 is also preserved directly as JSON. See `MANIFEST.json` for its hash and provenance.
