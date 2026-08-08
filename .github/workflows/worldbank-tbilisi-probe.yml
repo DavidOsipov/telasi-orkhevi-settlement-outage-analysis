@@ -13,51 +13,29 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Inspect all JS chunks actually loaded by Georgia WBES page
+      - name: Inspect raw Georgia topic-8 indicator response including subCuts
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet selenium requests
           python3 - <<'PY'
-          import json, time, requests, pathlib, re
-          from selenium import webdriver
-          from selenium.webdriver.chrome.options import Options
-
-          opts=Options(); opts.add_argument('--headless=new'); opts.add_argument('--no-sandbox'); opts.add_argument('--disable-dev-shm-usage')
-          opts.set_capability('goog:loggingPrefs', {'performance':'ALL'})
-          d=webdriver.Chrome(options=opts)
-          urls=[]
-          try:
-            d.get('https://www.enterprisesurveys.org/en/data/exploreeconomies/2023/georgia')
-            time.sleep(12)
-            for e in d.get_log('performance'):
-              try: m=json.loads(e['message'])['message']
-              except Exception: continue
-              if m.get('method')!='Network.responseReceived': continue
-              r=m.get('params',{}).get('response',{})
-              u=r.get('url','')
-              if u.endswith('.js') or '.js?' in u:
-                if u not in urls: urls.append(u)
-          finally: d.quit()
-
-          s=requests.Session(); s.headers['User-Agent']='Mozilla/5.0'
-          out=[f'JS_URL_COUNT {len(urls)}']
-          terms=re.compile(r'GetEconomyCutsData|GetEconomyIndicatorData|locationId|cutsId|CustomQuery|modalCountriesIndicatorData|GroupedIndicator',re.I)
-          for i,u in enumerate(urls):
-            try: r=s.get(u,timeout=60); text=r.text
-            except Exception as ex: out.append(f'ERR {u} {ex}'); continue
-            out.append(f'URL {i} {u} bytes={len(r.content)}')
-            matches=list(terms.finditer(text))
-            if matches:
-              out.append(f'MATCHES {len(matches)}')
-              for m in matches[:120]:
-                a=max(0,m.start()-1800); b=min(len(text),m.end()+3500)
-                out.append('CTX '+text[a:b].replace('\n',' '))
-          pathlib.Path('wb-loaded-js-context.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
-          print('\n'.join(out[-700:]))
+          import json, requests, pathlib
+          u='https://extdataportal.worldbank.org/api/esapi/GetEconomyIndicatorData/economyid/74/topicid/8/year/2023?lang=en'
+          r=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=60); r.raise_for_status()
+          data=r.json()
+          pathlib.Path('topic8-raw.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          wanted={'in16','bready_in2','bready_in3_median','Number_electrical_outages','Duration_elec_outage','Perc_firms_experiencing_electricity_outages'}
+          print('TOP TYPE',type(data).__name__,'LEN',len(data) if isinstance(data,list) else None)
+          for i,x in enumerate(data if isinstance(data,list) else [data]):
+            if not isinstance(x,dict): continue
+            code=x.get('queryFieldName') or x.get('code') or x.get('indicatorCode')
+            label=x.get('indicator') or x.get('publishedName') or x.get('name')
+            txt=(str(code)+' '+str(label)).lower()
+            if any(k in txt for k in ('electrical outage','electricity outage','bready_in2','bready_in3','perc_firms_experiencing','number_electrical','duration_elec')):
+              print('\nENTRY',i,'code',code,'label',label)
+              print(json.dumps(x,ensure_ascii=False,indent=2)[:200000])
           PY
       - uses: actions/upload-artifact@v7
         with:
           name: worldbank-tbilisi-probe
-          path: wb-loaded-js-context.txt
+          path: topic8-raw.json
           if-no-files-found: error
