@@ -18,7 +18,8 @@ Same-source descriptive comparison (SITE_A / neighbor archive; same Orkhevi buil
   2025: 7 emergency ETA-date groups
   2026: 9 emergency ETA-date groups
   exact descriptive ratio: 9/7 (decimal rounded to 3 dp: 1.286)
-  exact relative change: 200/7 (decimal rounded to 6 dp: 28.571429)%
+  exact relative change: 2/7 (decimal rounded to 6 dp: 0.285714)
+  exact relative change percent: 200/7 (decimal rounded to 6 dp: 28.571429)%
   This is an Orkhevi-building resident notification series, not a complete building-wide physical-outage rate.
 
 Cross-resident emergency ETA-date overlap at the same building (2025-12-06..2026-08-06):
