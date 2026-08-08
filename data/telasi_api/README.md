@@ -30,7 +30,7 @@ To fetch the complete currently exposed publication corpus in one request:
 python scripts/fetch_telasi_api.py --search-text "" --per-page 2000
 ```
 
-At the 2026-08-08 test, this returned 889 publications spanning 2025-10-13 through 2026-08-08.
+At the 2026-08-08 test, this returned 889 publications spanning 2025-10-13 through 2026-08-08. The number 889 is a **publication count**, not a count of physical outage incidents.
 
 ## Actual response structure
 
