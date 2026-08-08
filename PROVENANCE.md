@@ -22,6 +22,14 @@ They are therefore stored under `data/source_transcripts/`, not described as raw
 
 `validate.py` rebuilds `notifications.csv` and checks that group evidence sites, dates, ETA sets and planned-window arithmetic agree with supporting message rows.
 
+## Exact analytical outputs
+
+Core descriptive arithmetic is represented as reduced rational fractions. Decimal values in analytical reports are presentation values only and are explicitly labeled when rounded.
+
+`scripts/analyze.py` produces the conservative resident-data report. `scripts/analyze_exact_rates.py` independently exposes exact numerators/denominators for the key gap, equal-period, overlap and planned-window calculations.
+
+For SITE_B, for example, the first-to-last emergency ETA-date anchor distance is 243 days across 10 consecutive inter-arrival intervals, so the exact mean gap is `243/10` days. This is source-derived arithmetic, not a physical-outage-rate claim.
+
 ## Telasi public API source layer
 
 `data/telasi_api/` is a separate official-source publication layer obtained from Telasi's public website APIs.
@@ -55,7 +63,7 @@ The `getMtData` response is also preserved and contains page/Nuxt metadata rathe
 
 A browser network trace/netlog was used during reverse-engineering but is not published because such traces can contain unrelated request metadata and are not needed to reproduce the relevant API calls. Endpoint, payload and header semantics needed for reproduction are documented in `data/telasi_api/README.md`.
 
-## API-derived outputs
+## Telasi API-derived outputs
 
 `scripts/fetch_telasi_api.py` can:
 
@@ -68,7 +76,25 @@ Runtime live data are written under ignored `artifacts/` and are not automatical
 
 `scripts/compare_telasi_api_sms.py` performs exact restoration-ETA corroboration. Corpus-wide negative conclusions require two agreeing count-complete pagination passes and an independent consistency check between `fetch_metadata.json` and the loaded `records.csv` count/IDs. This is a stability gate for the public publication layer, not an atomic internal Telasi incident snapshot.
 
-## External context
+## Independent benchmark: WBES Tbilisi 2023
+
+`data/benchmarks/wbes_tbilisi_2023.json` records selected published/display indicators from the World Bank Enterprise Surveys Georgia 2023 Tbilisi location subgroup.
+
+The retained capture provenance includes:
+
+- source endpoint;
+- capture date: `2026-08-08`;
+- raw response size: `19052` bytes;
+- raw response SHA-256: `e1fdd8d139a786b05808a0a9861727e5bf48121f87f2cabafe157bdf6c74accd`;
+- GitHub Actions run/job/artifact identifiers and artifact SHA-256.
+
+The benchmark JSON intentionally stores World Bank values as decimal **strings** such as `"31.8"` and `"0.8"`. Converting `"0.8"` to the exact fraction `4/5` preserves the displayed decimal exactly; it does not recover an unrounded survey estimate.
+
+`scripts/fetch_wbes_tbilisi.py` is the reproducible live fetch/normalization path. Live refreshes go to ignored `artifacts/` first and are not automatically promoted to `data/benchmarks/`.
+
+The WBES “typical month” indicator is not treated as a mean-calendar-month rate. Consequently the repository does not derive an exact “one outage every N days” value or a direct Orkhevi/Tbilisi reliability ratio from it.
+
+## External grid context
 
 `data/external_context.csv` contains separately sourced system-level context. These rows are not local notification groups and are not automatically assigned as causes of local events.
 
