@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact arithmetic for descriptive SMS-notification rate comparisons.
+"""Exact arithmetic for descriptive SMS-notification metrics and benchmarks.
 
 Canonical values are kept as fractions. Decimal strings are emitted only as
 explicitly rounded representations for readability.
@@ -7,6 +7,11 @@ explicitly rounded representations for readability.
 This script does NOT estimate SAIDI/SAIFI or physical-outage rates. Its rate
 normalizations are based on gaps between curated emergency restoration-ETA
 notification groups and are therefore descriptive notification metrics only.
+
+The WBES "typical month" indicator is not definition-identical to a mean
+calendar month. Any arithmetic division between a SITE_B calendar-normalized
+inter-arrival metric and the WBES displayed value is retained only as a
+reproducibility diagnostic and must not be reported as a reliability ratio.
 """
 
 from __future__ import annotations
@@ -267,23 +272,32 @@ def build_analysis(groups_path: Path, wbes_path: Path) -> dict:
         "wbes_tbilisi_2023": {
             "source": wbes.get("source"),
             "source_endpoint": wbes.get("source_endpoint"),
+            "percent_firms_experiencing_outages_display": wbes["indicators"].get("in16", {}).get("published_value"),
             "published_average_outages_typical_month_text": wbes_text,
             "published_average_outages_typical_month_fraction_from_display": fraction_payload(wbes_display_rate),
             "precision_warning": (
                 "The fraction above is the exact rational representation of the decimal string published by the "
                 "World Bank API. It is not the hidden unrounded survey estimate."
             ),
+            "typical_month_semantics_warning": (
+                "WBES 'typical month' is a survey concept for the most common type of month regarding outages, "
+                "not the arithmetic mean Gregorian calendar month. The published 0.8 therefore has no exact "
+                "conversion to 'one outage every N days'."
+            ),
         },
         "site_b_vs_wbes_descriptive_normalization": {
+            "status": "diagnostic_arithmetic_only_not_a_rate_ratio",
             "site_b_mean_gregorian_month_interarrival_rate": fraction_payload(site_b_gregorian_month),
             "wbes_published_typical_month_rate_from_display": fraction_payload(wbes_display_rate),
             "ratio_site_b_over_wbes_display": fraction_payload(ratio_to_wbes_display),
             "relative_excess_over_wbes_display": fraction_payload(excess_over_wbes_display),
             "relative_excess_percent_over_wbes_display": fraction_payload(excess_over_wbes_display * 100),
             "comparison_warning": (
-                "This ratio is mathematically exact for the stated normalization and the displayed WBES value, "
-                "but it is not a statistically rigorous Orkhevi-vs-Tbilisi outage-rate ratio because the source "
-                "metrics, populations, years, completeness, and event identity differ."
+                "This arithmetic contrast is retained for reproducibility only. The SITE_B numerator is normalized "
+                "to an arithmetic mean Gregorian calendar month, whereas the WBES denominator is a weighted survey "
+                "indicator for a 'typical month'. Do not report this quotient as 'Orkhevi has X times/more outages "
+                "than Tbilisi'. The source metrics, populations, years, completeness, event identity, and month "
+                "definitions differ."
             ),
         },
     }
@@ -315,10 +329,11 @@ def render_text(data: dict) -> str:
         + (f" = {b['mean_gap_days']['exact_decimal']} days" if b['mean_gap_days']['exact_decimal'] else ""),
         f"  exact median gap: {b['median_gap_days']['exact_fraction']} days"
         + (f" = {b['median_gap_days']['exact_decimal']} days" if b['median_gap_days']['exact_decimal'] else ""),
-        f"  exact standardized rate / 30 days: {b['standardized_interarrival_groups_per_30_days']['exact_fraction']}",
-        "  standardized rate / mean Gregorian month: "
+        f"  exact standardized inter-arrival count / 30 days: {b['standardized_interarrival_groups_per_30_days']['exact_fraction']}",
+        "  standardized inter-arrival count / mean Gregorian calendar month: "
         f"{b['standardized_interarrival_groups_per_mean_gregorian_month']['exact_fraction']} "
         f"(decimal rounded to 12 dp: {b['standardized_interarrival_groups_per_mean_gregorian_month']['decimal_12dp_rounded']})",
+        "  These standardizations are derived from the 10 observed inter-arrival intervals, not from a proven complete observation window.",
         "",
         "SITE_A emergency restoration-ETA notification-group inter-arrivals:",
         f"  groups: {a['group_count']}",
@@ -343,20 +358,16 @@ def render_text(data: dict) -> str:
         f"  exact mean hours: {planned['mean_announced_hours']['exact_fraction']}",
         f"  exact median hours: {planned['median_announced_hours']['exact_fraction']}",
         "",
-        "WBES Tbilisi 2023 comparison:",
-        f"  published average outages in a typical month: {wbes['published_average_outages_typical_month_text']}",
-        "  exact rational representation of that displayed decimal: "
+        "WBES Tbilisi 2023 independent benchmark:",
+        f"  percent of firms experiencing electrical outages (published display value): {wbes['percent_firms_experiencing_outages_display']}%",
+        f"  average outages in a typical month (published display value): {wbes['published_average_outages_typical_month_text']}",
+        "  exact rational representation of the displayed 0.8: "
         f"{wbes['published_average_outages_typical_month_fraction_from_display']['exact_fraction']}",
-        "  SITE_B inter-arrival rate normalized to exact mean Gregorian month: "
-        f"{comparison['site_b_mean_gregorian_month_interarrival_rate']['exact_fraction']}",
-        "  exact ratio against displayed WBES value: "
-        f"{comparison['ratio_site_b_over_wbes_display']['exact_fraction']} "
-        f"(decimal rounded to 12 dp: {comparison['ratio_site_b_over_wbes_display']['decimal_12dp_rounded']})",
-        "  exact relative excess against displayed WBES value: "
-        f"{comparison['relative_excess_percent_over_wbes_display']['exact_fraction']}% "
-        f"(decimal rounded to 12 dp: {comparison['relative_excess_percent_over_wbes_display']['decimal_12dp_rounded']}%)",
+        "  No direct SITE_B/WBES outage-rate ratio is reported.",
+        "  WBES 'typical month' is not the arithmetic mean Gregorian month, so 0.8 cannot be exactly converted to 'one outage every N days'.",
         "",
         wbes["precision_warning"],
+        wbes["typical_month_semantics_warning"],
         comparison["comparison_warning"],
         "",
         "Do not rewrite the SITE_B gap/rate metrics as a physical-outage rate or SAIFI.",
