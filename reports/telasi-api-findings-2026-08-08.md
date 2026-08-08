@@ -129,8 +129,12 @@ including:
   in the title/body;
 - obvious reused or mistyped dates in some records.
 
-These anomalies should not be silently corrected. Analyses should retain both
-the original text and parsed values and flag inconsistent records.
+For example, publication ID 4644 was published in January 2026 but its body
+contains a restoration ETA year of 2025. Such values are retained as-source and
+must be flagged rather than silently corrected.
+
+These anomalies mean that the public API is an official publication source, but
+not a clean ground-truth event ledger.
 
 ## Methodological consequence
 
