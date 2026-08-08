@@ -1,0 +1,64 @@
+name: Temporary World Bank Tbilisi benchmark probe
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Inspect Enterprise Surveys frontend for data endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re, requests, urllib.parse, pathlib, json
+          base='https://www.enterprisesurveys.org'
+          urls=[base+'/en/data', base+'/en/data/custom-query', base+'/en/data/exploretopics/infrastructure-and-climate']
+          out=[]
+          sess=requests.Session()
+          sess.headers['User-Agent']='Mozilla/5.0'
+          scripts=[]
+          for u in urls:
+              r=sess.get(u,timeout=30)
+              out.append(f'PAGE {u} status={r.status_code} bytes={len(r.content)} final={r.url}')
+              pathlib.Path('/tmp/page.html').write_text(r.text,encoding='utf-8')
+              for src in re.findall(r'<script[^>]+src=["\']([^"\']+)',r.text,re.I):
+                  full=urllib.parse.urljoin(r.url,src)
+                  if full not in scripts: scripts.append(full)
+          out.append(f'SCRIPTS {len(scripts)}')
+          candidates=[]
+          pat=re.compile(r'(?i)(subnational|indicator|custom.?query|api|electric|outage|location)')
+          urlpat=re.compile(r'https?://[^"\'\\\s]+')
+          for i,u in enumerate(scripts):
+              try:
+                  r=sess.get(u,timeout=30)
+              except Exception as e:
+                  out.append(f'ERR {u} {e}')
+                  continue
+              text=r.text
+              out.append(f'SCRIPT {i} {u} status={r.status_code} bytes={len(r.content)}')
+              if pat.search(text):
+                  candidates.append(u)
+                  for m in list(pat.finditer(text))[:40]:
+                      a=max(0,m.start()-220); b=min(len(text),m.end()+420)
+                      snippet=text[a:b].replace('\n',' ')
+                      out.append('MATCH '+u+' :: '+snippet)
+                  for x in sorted(set(urlpat.findall(text))):
+                      if any(k in x.lower() for k in ('api','survey','indicator','data')):
+                          out.append('URL '+x[:1000])
+          pathlib.Path('worldbank-frontend-probe.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
+          print('\n'.join(out[-300:]))
+          print('CANDIDATE_SCRIPTS',json.dumps(candidates))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: worldbank-tbilisi-probe
+          path: worldbank-frontend-probe.txt
+          if-no-files-found: error
