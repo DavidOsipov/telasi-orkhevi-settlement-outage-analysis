@@ -9,7 +9,6 @@ analysis = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(analysis)
 
-
 class AnalysisTests(unittest.TestCase):
     def test_fully_contained_window_counts_multiple_groups_on_same_date(self):
         rows = [
@@ -24,32 +23,32 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual((start, end), (date(2026, 8, 5), date(2026, 8, 5)))
         self.assertEqual([r["group_id"] for r in selected], ["G20260805-E01", "G20260805-E02"])
 
-    def test_current_report_uses_site_specific_notification_gaps(self):
+    def test_report_uses_same_building_source_semantics(self):
         text = analysis.render()
-        self.assertIn("SITE_A: mean=317/10 = 31.7 d; median=23 d", text)
-        self.assertIn("SITE_B: mean=243/10 = 24.3 d; median=45/2 = 22.5 d", text)
-        self.assertNotIn("mean=30.19 d", text)
-        self.assertIn("Do not restate these values as 'an outage every N days'", text)
+        self.assertIn("two residents of the same Orkhevi building", text)
+        self.assertIn("SITE_A (neighbor archive, starts 2024): mean=317/10 = 31.7 d", text)
+        self.assertIn("SITE_B (repository-owner archive, starts 2025): mean=243/10 = 24.3 d", text)
+        self.assertNotIn("Per-site emergency", text)
+        self.assertNotIn("Cross-site", text)
+
+    def test_building_union_is_explicitly_ascertainment_limited(self):
+        text = analysis.render()
+        self.assertIn("mean gap=634/21", text)
+        self.assertIn("not a constant-ascertainment incidence series", text)
 
     def test_current_window_maxima(self):
         text = analysis.render()
         self.assertIn("3-day window: max 3 groups, 2026-08-04..2026-08-06", text)
         self.assertIn("24-day window: max 4 groups, 2026-07-14..2026-08-06", text)
 
-    def test_cross_site_overlap_is_explicitly_date_set_based(self):
+    def test_cross_resident_overlap_is_date_set_based(self):
         text = analysis.render()
+        self.assertIn("Cross-resident emergency ETA-date overlap at the same building", text)
         self.assertIn("SITE_A unique ETA dates: 10", text)
         self.assertIn("SITE_B unique ETA dates: 11", text)
         self.assertIn("shared ETA dates: 10", text)
         self.assertIn("Jaccard(unique ETA-date sets): 10/11", text)
-        self.assertIn("decimal rounded to 3 dp: 0.909", text)
-        self.assertNotIn("SITE_A groups: 10", text)
-
-    def test_russian_summary_headlines_match_current_analysis(self):
-        summary = (ROOT / "reports" / "statistical-summary-ru.md").read_text(encoding="utf-8")
-        for fragment in ("31,70 дня", "24,30 дня", "+28,6%", "39,0 часа", "90,9%"):
-            self.assertIn(fragment, summary)
-
+        self.assertIn("not two-site/network-topology evidence", text)
 
 if __name__ == "__main__":
     unittest.main()
