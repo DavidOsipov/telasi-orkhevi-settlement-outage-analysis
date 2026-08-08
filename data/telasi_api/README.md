@@ -4,36 +4,123 @@ Official endpoint used by the Telasi web application:
 
 `POST https://app.telasi.ge/api/view/telasi/getPoweroutages`
 
-Current Orkhevi-oriented query payload:
+A public-frontend-style payload is:
 
 ```json
-{"contentType":"poweroutage","searchText":"ორხევ"}
+{
+  "searchText": "ორხევ",
+  "pageNumber": 1,
+  "perPage": 100,
+  "selectedlan": "ka",
+  "taxonomy": {
+    "content_poweroutage": [2769, 2770]
+  }
+}
 ```
 
 Run:
 
 ```bash
-python scripts/fetch_telasi_api.py --search-text "ორხევ"
+python scripts/fetch_telasi_api.py --search-text "ორხევ" --per-page 100
 ```
 
-By default, the script writes an exact `response.json`, fetch metadata including a SHA-256 hash, and a normalized `records.csv` under `artifacts/telasi_api/`.
+To fetch the complete currently exposed publication corpus in one request:
+
+```bash
+python scripts/fetch_telasi_api.py --search-text "" --per-page 2000
+```
+
+At the 2026-08-08 test, this returned 889 publications spanning 2025-10-13 through 2026-08-08.
+
+## Actual response structure
+
+The response contains parallel top-level objects named `api` and `content`.
+For the power-outage query tested here, the actual records are in:
+
+- `content.listCount`
+- `content.list`
+
+The parallel `api.listCount` is zero and `api.list` is empty.
+
+Each `content.list` item already includes the full publication HTML in the
+`editor` field, together with fields such as `id`, `date`, `created_at`,
+`updated_at`, `status`, `content_type`, `taxonomy`, `slug`, `title` and `teaser`.
+
+The earlier hypothesis that a second request is required to fetch the
+publication body was tested and rejected.
+
+## `getMtData` is not the outage-detail API
+
+The endpoint:
+
+`POST https://www.telasi.ge/api/getMtData`
+
+with a payload such as:
+
+```json
+{"url":"/company-news/power-outage?content=5584","lang":"ka"}
+```
+
+returns Nuxt/page metadata including SEO information. It does **not** provide
+the outage publication body; that body is already present in
+`getPoweroutages` → `content.list[].editor`.
+
+## Observed taxonomy IDs
+
+In the fetched corpus, records carrying only taxonomy ID `2769` are treated by
+this repository as `planned_or_scheduled`, while records carrying only `2770`
+are treated as `unplanned`.
+
+These labels are based on the observed titles/body content and should be kept
+as an empirical mapping unless an official Telasi taxonomy definition is
+located.
+
+## Orkhevi search result
+
+Searching the Georgian substring `ორხევ` returned 17 public publications in
+the 2026-08-08 fetch:
+
+- 13 `unplanned` publications;
+- 4 `planned_or_scheduled` publications.
+
+This is a text search, not an electrical-topology query. A hit can refer to an
+Orkhevi industrial-zone address, road/exit, or another textual occurrence and
+must not automatically be attributed to the user's service point or the whole
+settlement.
 
 ## Evidence semantics
 
-This API is a separate official-source layer and must not be silently merged with resident SMS records.
+This API is a separate official-source layer and must not be silently merged
+with resident SMS records.
 
-The response exposes fields including `id`, `code`, `users_count`, `outage_time`, `poweron_time`, `delayed`, address/title fields, taxonomy, and record creation/update timestamps.
+For unplanned publications, the script parses the Georgian phrase for the
+estimated restoration time from `editor`. The parsed value is stored as
+`restoration_eta` and remains exactly that: an **estimated restoration time**,
+not an actual restoration timestamp or outage duration.
 
-The meaning of `poweron_time` should be treated conservatively. Unless Telasi documentation establishes otherwise, this repository does **not** assume that it is an actual restoration timestamp. The derived `api_window_minutes` field is therefore only the mathematical difference between `outage_time` and `poweron_time`, not a claimed physical outage duration.
+The public API contains duplicates and apparent source-data errors/typos. Raw
+responses are therefore preserved together with a SHA-256 digest before any
+normalization.
 
 ## Matching to SMS
 
-Potential API/SMS matches should be stored explicitly with a match method and confidence. Useful evidence includes:
+Use:
 
-- date/time consistency;
-- address or Orkhevi name match;
-- outage type (`planned`, emergency/`არაგეგმური`, switching/`გადართვა`, etc.);
-- matching restoration ETA where applicable;
-- Telasi `code` / API `id`.
+```bash
+python scripts/compare_telasi_api_sms.py --fetch
+```
 
-Do not infer a match solely because two records occur on the same date.
+The 2026-08-08 complete-corpus comparison found **no exact restoration-ETA
+match** between the supplied emergency SMS values and any of the 889 public
+Telasi publications.
+
+That is a useful negative result. It indicates that the website/API publication
+layer is **not a complete subscriber-level outage history**. It does not
+invalidate the SMS records.
+
+Do not infer a match solely because a public publication and a subscriber SMS
+occur on the same calendar date; Telasi can publish many different notices on
+the same day with different areas and ETAs.
+
+See `reports/telasi-api-findings-2026-08-08.md` for the detailed findings and
+caveats.
