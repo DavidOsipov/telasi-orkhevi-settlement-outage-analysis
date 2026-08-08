@@ -124,3 +124,8 @@ the same day with different areas and ETAs.
 
 See `reports/telasi-api-findings-2026-08-08.md` for the detailed findings and
 caveats.
+
+The pull-request workflow fetches the live corpus and asserts the currently
+observed structural invariants. This is intentional: if Telasi changes the API
+schema, taxonomy behavior, archive depth, or Orkhevi search result count, CI
+will fail instead of silently producing incompatible data.
