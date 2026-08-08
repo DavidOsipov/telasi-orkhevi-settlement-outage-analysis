@@ -1,0 +1,49 @@
+Exact descriptive rate analysis
+===============================
+
+Emergency rows are curated restoration-ETA notification groups, not proven distinct physical outages. The supplied transcript span is not a proven complete observation window.
+
+Canonical arithmetic rule: reduced fractions are exact; decimal_12dp values are rounded presentation only.
+
+SITE_B emergency restoration-ETA notification-group inter-arrivals:
+  groups: 11
+  first..last anchor: 2025-12-06 .. 2026-08-06
+  elapsed days: 243
+  inter-arrival intervals: 10
+  exact mean gap: 243/10 days = 24.3 days
+  exact median gap: 45/2 days = 22.5 days
+  exact standardized rate / 30 days: 100/81
+  standardized rate / mean Gregorian month: 5411/4320 (decimal rounded to 12 dp: 1.252546296296)
+
+SITE_A emergency restoration-ETA notification-group inter-arrivals:
+  groups: 21
+  exact mean gap: 317/10 days
+  exact median gap: 23 days
+
+SITE_A equal-period count comparison (Jan 1-Aug 6):
+  2025: 7
+  2026: 9
+  exact ratio: 9/7
+  exact relative change: 2/7
+  exact relative change percent: 200/7% (decimal rounded to 12 dp: 28.571428571429%)
+
+Cross-site overlap:
+  exact Jaccard: 10/11 (decimal rounded to 12 dp: 0.909090909091)
+
+Planned announced windows:
+  groups: 9
+  exact total hours: 39
+  exact mean hours: 13/3
+  exact median hours: 4
+
+WBES Tbilisi 2023 comparison:
+  published average outages in a typical month: 0.8
+  exact rational representation of that displayed decimal: 4/5
+  SITE_B inter-arrival rate normalized to exact mean Gregorian month: 5411/4320
+  exact ratio against displayed WBES value: 5411/3456 (decimal rounded to 12 dp: 1.565682870370)
+  exact relative excess against displayed WBES value: 48875/864% (decimal rounded to 12 dp: 56.568287037037%)
+
+The fraction above is the exact rational representation of the decimal string published by the World Bank API. It is not the hidden unrounded survey estimate.
+This ratio is mathematically exact for the stated normalization and the displayed WBES value, but it is not a statistically rigorous Orkhevi-vs-Tbilisi outage-rate ratio because the source metrics, populations, years, completeness, and event identity differ.
+
+Do not rewrite the SITE_B gap/rate metrics as a physical-outage rate or SAIFI.
