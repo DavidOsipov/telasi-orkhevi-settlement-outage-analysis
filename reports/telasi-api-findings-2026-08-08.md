@@ -145,3 +145,11 @@ For a formal request to Telasi, the mismatch itself is useful: Telasi can be
 asked to supply its internal interruption/event IDs and actual start/restoration
 timestamps corresponding to the subscriber SMS, because those subscriber-level
 records are demonstrably not recoverable from the public publication API.
+
+## Reproducibility
+
+The comparison is implemented in `scripts/compare_telasi_api_sms.py`.
+The GitHub Actions integration fetches the live public corpus, the Orkhevi search
+subset and then checks the comparison invariants. On 2026-08-08 the validation
+workflow completed successfully with the 889-publication corpus, 17 Orkhevi
+search results and zero exact SMS-ETA matches.
