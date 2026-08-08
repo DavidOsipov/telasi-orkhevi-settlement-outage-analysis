@@ -13,29 +13,29 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Inspect raw Georgia topic-8 indicator response including subCuts
+      - name: Fetch official WBES 2023 Tbilisi electricity subgroup values
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, requests, pathlib
-          u='https://extdataportal.worldbank.org/api/esapi/GetEconomyIndicatorData/economyid/74/topicid/8/year/2023?lang=en'
+          import json, requests, pathlib, hashlib
+          u='https://extdataportal.worldbank.org/api/esapi/GetEconomyCutsData/economyid/74/year/2023/topicid/8/cutsid/3/?lang=en'
           r=requests.get(u,headers={'User-Agent':'Mozilla/5.0'},timeout=60); r.raise_for_status()
-          data=r.json()
-          pathlib.Path('topic8-raw.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          wanted={'in16','bready_in2','bready_in3_median','Number_electrical_outages','Duration_elec_outage','Perc_firms_experiencing_electricity_outages'}
-          print('TOP TYPE',type(data).__name__,'LEN',len(data) if isinstance(data,list) else None)
-          for i,x in enumerate(data if isinstance(data,list) else [data]):
-            if not isinstance(x,dict): continue
-            code=x.get('queryFieldName') or x.get('code') or x.get('indicatorCode')
-            label=x.get('indicator') or x.get('publishedName') or x.get('name')
-            txt=(str(code)+' '+str(label)).lower()
-            if any(k in txt for k in ('electrical outage','electricity outage','bready_in2','bready_in3','perc_firms_experiencing','number_electrical','duration_elec')):
-              print('\nENTRY',i,'code',code,'label',label)
-              print(json.dumps(x,ensure_ascii=False,indent=2)[:200000])
+          raw=r.content; data=r.json()
+          pathlib.Path('tbilisi-topic8-location-cuts.json').write_bytes(raw)
+          print('URL',u)
+          print('BYTES',len(raw),'SHA256',hashlib.sha256(raw).hexdigest())
+          print('TYPE',type(data).__name__,'LEN',len(data) if isinstance(data,list) else None)
+          rows=data if isinstance(data,list) else [data]
+          for i,row in enumerate(rows):
+            if not isinstance(row,dict): continue
+            txt=json.dumps(row,ensure_ascii=False).lower()
+            if 'tbilisi' in txt or '1061' in txt:
+              print('\nTBILISI ROW',i)
+              print(json.dumps(row,ensure_ascii=False,indent=2)[:250000])
           PY
       - uses: actions/upload-artifact@v7
         with:
           name: worldbank-tbilisi-probe
-          path: topic8-raw.json
+          path: tbilisi-topic8-location-cuts.json
           if-no-files-found: error
