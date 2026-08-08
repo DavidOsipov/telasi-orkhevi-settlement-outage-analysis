@@ -8,6 +8,8 @@
   "cut": "Location",
   "subcut": "Tbilisi",
   "source_endpoint": "https://extdataportal.worldbank.org/api/esapi/GetEconomyCutsData/economyid/74/year/2023/topicid/8/cutsid/3/?lang=en",
+  "source_topic_page": "https://www.enterprisesurveys.org/en/data/exploretopics/infrastructure-and-climate",
+  "source_microdata_variable_c7": "https://microdata.worldbank.org/catalog/6443/variable/F1/V57?name=c7",
   "captured_on": "2026-08-08",
   "raw_response_bytes": 19052,
   "raw_response_sha256": "e1fdd8d139a786b05808a0a9861727e5bf48121f87f2cabafe157bdf6c74accd",
@@ -18,6 +20,8 @@
     "artifact_sha256": "cfb3a3cf5a9bcacd3508de9031a063a9dd598b26f7b7b6c9df0f01ebe04e8b2a"
   },
   "precision_note": "WBES API values below are published/display values with finite decimal precision. Their rational interpretation is exact only for the returned decimal strings and does not recover hidden unrounded weighted survey estimates.",
+  "typical_month_semantics_note": "WBES 'typical month' is a survey concept, not an arithmetic mean Gregorian calendar month. The published 0.8 cannot be exactly converted to 'one outage every N days' and is not definition-identical to resident emergency restoration-ETA notification inter-arrival metrics.",
+  "comparison_policy": "Use these values as independent Tbilisi context. Do not report a direct X-times or percentage Orkhevi-building-vs-Tbilisi physical-outage reliability ratio from resident calendar inter-arrival normalizations divided by the WBES typical-month value.",
   "indicators": {
     "in16": {
       "indicator_id": 183,
@@ -35,7 +39,8 @@
       "indicator_id": 232,
       "indicator": "[B-READY] Duration, in hours, of a typical electrical outage [median]",
       "published_value": "0",
-      "unit": "hours"
+      "unit": "hours",
+      "interpretation_warning": "Preserve the published value literally; do not infer that physical outages have zero duration without examining the underlying indicator definition and source data."
     },
     "in12": {
       "indicator_id": 101,
