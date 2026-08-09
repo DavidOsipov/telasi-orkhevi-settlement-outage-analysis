@@ -1,4 +1,4 @@
-# Telasi Orkhevi Settlement outage analysis
+# Telasi Orkhevi Settlement outage-notification analysis
 
 A reproducible, privacy-conscious evidence package about Telasi electricity-interruption notifications for **one residential building in Orkhevi Settlement (ორხევის დასახლება), Samgori District, Tbilisi, Georgia**.
 
@@ -10,7 +10,7 @@ The repository separates three kinds of material:
 2. **Telasi public outage publications/API responses**; and
 3. **independent external benchmark/context data**, currently including World Bank Enterprise Surveys (WBES).
 
-Neither the SMS layer nor the Telasi publication layer is a complete utility incident ledger.
+Neither the resident SMS layer nor the Telasi publication layer is a complete utility incident ledger.
 
 For emergency SMS and many Telasi public notices, the stated date/time is an **estimated restoration time**. It is not automatically an outage-start timestamp or an actual restoration timestamp. The repository therefore does not equate notification/publication dates with distinct physical outage incidents and does not calculate physical outage duration from ETAs.
 
@@ -18,23 +18,23 @@ For emergency SMS and many Telasi public notices, the stated date/time is an **e
 
 - Primary locality: **Orkhevi Settlement (ორხევის დასახლება), Tbilisi**
 - [Wikidata: Q130437988](https://www.wikidata.org/entity/Q130437988)
-- `SITE_A`: **neighbor resident SMS archive for the same building**, with supplied history beginning in 2024.
-- `SITE_B`: **repository-owner resident SMS archive for the same building**, with supplied history beginning in 2025.
+- `SITE_A`: **neighbor resident SMS archive for the same building**; earliest supplied anchor date: **2024-11-10**.
+- `SITE_B`: **repository-owner resident SMS archive for the same building**; earliest supplied anchor date: **2025-11-12**. Its emergency series begins on **2025-12-06**.
 
 `SITE_A` / `SITE_B` are stable legacy source IDs. They must **not** be interpreted as two geographic sites or two different buildings.
 
-The exact address, apartment numbers and subscriber/account numbers are intentionally not public. The neighbor may receive Telasi messages for other properties generally, but the pseudonymized `SITE_A` transcript used here concerns the same Orkhevi building as `SITE_B`.
+The exact address, apartment numbers and subscriber/account numbers are intentionally not public. The source mapping used in this repository treats the included `SITE_A` transcript as belonging to the same Orkhevi building as `SITE_B`; unrelated messages the neighbor may receive for other properties are outside this supplied dataset.
 
-See [`SCOPE.md`](SCOPE.md).
+See [`SCOPE.md`](SCOPE.md) and [`PROVENANCE.md`](PROVENANCE.md).
 
 ## Resident-SMS evidence
 
-Combined source-record anchor span: **2024-11-10 through 2026-08-06**. This is a retrospective transcript span, not a proven complete observation window.
+The combined source-record anchor span is **2024-11-10 through 2026-08-06**. That is **635 calendar dates when counted inclusively**; the elapsed difference between the first and last anchor dates is **634 days**. This is a retrospective transcript span, not a proven complete observation window.
 
 Current curated data contain:
 
 - **56** redacted source-message records;
-- **22** emergency restoration-ETA notification groups;
+- **22 unique building-level emergency restoration-ETA notification groups** after cross-resident grouping/deduplication;
 - **1** network-switching restoration-ETA group;
 - **11** planned-work-related groups, including cancellation/update signals.
 
@@ -44,7 +44,7 @@ Group IDs use a future-safe form such as `G20260805-E01` (`E` emergency, `S` swi
 
 ## Current descriptive findings
 
-### Longest constant resident source: SITE_A
+### Longest constant-source resident series: SITE_A
 
 `SITE_A` contains **21** emergency ETA-date groups from **2024-11-10 through 2026-08-06**. The 21 groups create **20 consecutive inter-arrival intervals** spanning exactly **634 elapsed days**.
 
@@ -53,7 +53,7 @@ Group IDs use a future-safe form such as `G20260805-E01` (`E` emergency, `S` swi
 - minimum gap: **1 day**;
 - maximum gap: **100 days**.
 
-This is the preferred resident series for longitudinal normalization because the evidence source stays the same throughout the interval. It is still **not** a complete physical-outage incidence series.
+This is the preferred resident source for descriptive longitudinal comparisons because the evidence source stays constant across the supplied span. It is still **not** a complete physical-outage incidence series.
 
 ### SITE_B and recent clustering
 
@@ -62,13 +62,15 @@ This is the preferred resident series for longitudinal normalization because the
 - exact mean notification-group gap: **243/10 = 24.3 days**;
 - exact median gap: **45/2 = 22.5 days**.
 
-At SITE_B, emergency SMS carry restoration ETAs on **4, 5 and 6 August 2026**. This is three notification groups on three consecutive ETA dates; without receipt/restoration timestamps it is not proof of three distinct physical outage incidents.
+At `SITE_B`, emergency SMS carry restoration ETAs on **4, 5 and 6 August 2026**. This is three notification groups on three consecutive ETA dates; without receipt/restoration timestamps it is not proof of three distinct physical outage incidents.
+
+The SITE_A and SITE_B counts overlap and must not be added together as separate building incidents.
 
 ### Building-level union
 
 The deduplicated building-level union contains **22** emergency groups. Across its first-to-last anchors there are 21 intervals over 634 days, so the exact mean gap is **634/21 days**.
 
-This union is useful as a catalogue of known building-level notifications, but it is **not** the preferred rate series because ascertainment changes when the second resident archive begins.
+This union is useful as a catalogue of known building-level notifications, but it is **not** the preferred longitudinal series because ascertainment changes when the second resident archive begins.
 
 ### Equal-period SITE_A comparison
 
@@ -104,7 +106,7 @@ For planned notices without a cancellation signal in the same curated group:
 
 These are announced windows, not measured downtime.
 
-## Independent Tbilisi benchmark: WBES 2023
+## Independent Tbilisi context: WBES 2023
 
 The repository preserves selected published/display values from the **World Bank Enterprise Surveys (WBES), Georgia 2023, Tbilisi location subgroup** under [`data/benchmarks/`](data/benchmarks/):
 
@@ -118,7 +120,7 @@ The displayed `0.8` can be represented exactly as **4/5**, but only as the ratio
 More importantly, WBES **“typical month” is a survey concept, not the arithmetic mean Gregorian calendar month**. Therefore this repository does **not**:
 
 - convert `0.8` into “one outage every N days”;
-- report the SITE_A, SITE_B or building-union Gregorian-month normalizations as definition-identical to WBES;
+- treat SITE_A, SITE_B or building-union calendar inter-arrival normalizations as definition-identical to WBES;
 - claim an `X×` or `Y%` Orkhevi-vs-Tbilisi physical-outage reliability difference from these non-identical metrics.
 
 Conditional arithmetic quotients are retained in machine-readable exact-analysis output only as diagnostic/reproducibility fields and are explicitly marked **not a rate ratio**.
@@ -178,6 +180,15 @@ python scripts/fetch_wbes_tbilisi.py \
 ```
 
 Live output remains under ignored `artifacts/` until deliberately reviewed and promoted as evidence.
+
+## Further documentation
+
+- [`METHODOLOGY.md`](METHODOLOGY.md) — evidence model, grouping, arithmetic and interpretation rules.
+- [`PROVENANCE.md`](PROVENANCE.md) — resident/API/benchmark source provenance.
+- [`SCOPE.md`](SCOPE.md) — geographic and temporal scope.
+- [`AUDIT.md`](AUDIT.md) — material corrections and re-audit history.
+- [`PRIVACY.md`](PRIVACY.md) — publication/privacy constraints.
+- [`LICENSE-SCOPE.md`](LICENSE-SCOPE.md) — licensing boundaries for original and third-party material.
 
 ## Unsupported reliability claims
 
